@@ -1,7 +1,7 @@
 // All app-wide constants live here, so each one changes in one place.
 // No browser-only code in this file: api/pack.ts (server) imports it too.
 
-export const APP_NAME = '[APP NAME]'
+export const APP_NAME = 'KodiGo'
 export const PACK_EXTENSION = '.studypack'
 
 // Longest Lesson_Text the Pack_Service accepts, in characters.

@@ -90,7 +90,7 @@ export function MakePack({ onDone, onCancel }: MakePackProps) {
       <header className="lessons-screen__appbar">
         <div className="lessons-screen__brand">
           <span className="lessons-screen__diamond" aria-hidden="true" />
-          <span className="lessons-screen__appname">[APP NAME]</span>
+          <span className="lessons-screen__appname">KodiGo</span>
         </div>
       </header>
 

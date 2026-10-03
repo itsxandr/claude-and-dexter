@@ -184,7 +184,7 @@ Model rule for every backend task: the model name comes only from the `MODEL_ID`
     - File: `logic/packJson.invalid.test.ts`
     - **Property 8: Invalid input never becomes a pack**
     - **Validates: Requirements 4.7, 3.10**
-  - [ ] 9.4 [frontend] Implement `io/packFile.ts` and the Share / Open buttons
+  - [x] 9.4 [frontend] Implement `io/packFile.ts` and the Share / Open buttons
     - Export: `File` named `safeName(title) + PACK_EXTENSION`. Use the Web Share API when `navigator.canShare({ files })` is true, else download.
     - Import: file input with no `accept` filter, read as text, `packFromJson`. On failure show "This file is not a valid pack." and save nothing. Same `id` replaces the old pack.
     - Add "Share" to the pack's first screen, `PathPick.tsx` (the Preview does not exist yet; task 11 adds Share there too). Add "Open a pack file" to `Library.tsx`.
@@ -210,7 +210,7 @@ Model rule for every backend task: the model name comes only from the `MODEL_ID`
     - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 6.7_
 
 - [ ] 12. [frontend] Friendly error messages
-  - [ ] 12.1 [frontend] Add the friendly error messages from the design's Error Handling table
+  - [x] 12.1 [frontend] Add the friendly error messages from the design's Error Handling table
     - In `MakePack.tsx`: "Making a pack needs internet once." (offline), "This is taking too long." + Try again (timeout), "Something went wrong." + Try again (server or network), "The pack did not come out right." + Try again (failed checks). "Try again" makes one new request.
     - In `io/pdf.ts`: wrap pdf.js in try/catch → "We could not read this file."
     - In `io/store.ts`: catch quota errors → "Your phone storage is full." and save nothing.

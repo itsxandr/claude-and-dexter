@@ -12,8 +12,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg'],
       manifest: {
-        name: '[APP NAME]',
-        short_name: '[APP NAME]',
+        name: 'KodiGo',
+        short_name: 'KodiGo',
         start_url: '/',
         display: 'standalone',
         background_color: '#ffffff',

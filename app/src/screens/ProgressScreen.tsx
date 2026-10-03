@@ -37,7 +37,7 @@ export function ProgressScreen({ pack, mastery, onStudyAgain, onFlashcards }: Pr
       <header className="progress-screen__appbar">
         <div className="progress-screen__brand">
           <span className="progress-screen__diamond" aria-hidden="true" />
-          <span className="progress-screen__appname">[APP NAME]</span>
+          <span className="progress-screen__appname">KodiGo</span>
         </div>
       </header>
 
