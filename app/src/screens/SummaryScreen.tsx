@@ -5,6 +5,7 @@ import { ReadAloudButton } from '../components/ReadAloudButton';
 import { ParagraphSheet } from '../components/ParagraphSheet';
 import { useState } from 'react';
 import { useStrings } from '../i18n/language';
+import { STRINGS } from '../i18n/strings';
 
 type ReadingLevel = 1 | 2 | 3;
 
@@ -29,7 +30,9 @@ export function SummaryScreen({ pack, level, onStart, onClose }: SummaryScreenPr
   const summary = pack.summaries.find(s => s.level === level)!;
 
   /* Build the read-aloud text: summary + paragraph numbers */
-  const readAloudText = `${t.heading}. ${summary.text}`;
+  // Spoken in English in every App language: read-aloud uses an English voice
+  // because the lesson text is English.
+  const readAloudText = `${STRINGS.en.summary.heading}. ${summary.text}`;
 
   return (
     <>
