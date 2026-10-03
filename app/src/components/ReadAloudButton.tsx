@@ -53,7 +53,10 @@ export function ReadAloudButton({ text }: ReadAloudButtonProps) {
 
     // Prefer a local (offline-capable) voice
     const voices = synth.getVoices();
-    const local = voices.find(v => v.localService);
+        // Lesson text is English, so use an English voice.
+    const english = voices.filter(v => v.lang.startsWith('en'));
+    const local = english.find(v => v.localService) ?? english[0];
+    utterance.lang = 'en-US';
     if (local) utterance.voice = local;
 
     utterance.onstart = () => setSpeaking(true);
