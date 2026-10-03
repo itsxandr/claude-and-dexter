@@ -32,4 +32,155 @@
  *   https://developers.openai.com/api/docs/guides/structured-outputs
  */
 
-export {};
+/** What the handler gets back. `json` is the model's raw text (may still have fences). */
+export interface DraftResult {
+  json: string;
+  inputTokens: number;
+  outputTokens: number;
+}
+
+/**
+ * Thrown when MODEL_ID or MODEL_API_KEY is missing. The message names the
+ * variable only, never a value. The handler maps this to 500 not_configured.
+ */
+export class ConfigError extends Error {
+  readonly variable: string;
+  constructor(variable: string) {
+    super(`Missing environment variable: ${variable}`);
+    this.name = "ConfigError";
+    this.variable = variable;
+  }
+}
+
+const OPENAI_URL = "https://api.openai.com/v1/responses";
+export const MODEL_TIMEOUT_MS = 80_000;
+export const MAX_OUTPUT_TOKENS = 16000; // see the 3.1 comment above for the reason
+
+/** Fixed instructions. Contains the word "JSON", which JSON mode requires. */
+export const PACK_PROMPT = `You make a study pack for a Grade 7 student in the Philippines who reads below grade level.
+The lesson is given as numbered paragraphs, each starting with "[n]".
+
+Return only one JSON object with exactly this shape and nothing else:
+{
+  "summaries": [
+    { "level": 1, "text": "...", "paragraphs": [1, 2] },
+    { "level": 2, "text": "...", "paragraphs": [1, 3] },
+    { "level": 3, "text": "...", "paragraphs": [2, 3] }
+  ],
+  "questions": [
+    {
+      "skill": "main_idea",
+      "level": 1,
+      "prompt": "...",
+      "choices": ["...", "...", "..."],
+      "answerIndex": 0,
+      "hints": [
+        { "text": "...", "paragraph": 2 },
+        { "text": "...", "paragraph": 2 }
+      ],
+      "explanation": { "text": "...", "paragraph": 2 }
+    }
+  ],
+  "glossary": [
+    { "en": "...", "fil": "...", "meaning": "..." }
+  ]
+}
+
+Rules:
+- "summaries": exactly 3 items, one for each level 1, 2, 3. Each is a short summary of the whole lesson.
+- "skill" is one of: "main_idea", "detail", "vocabulary", "inference".
+- "level" is 1, 2, or 3. Level 1 uses very simple, common words and very short sentences. Level 2 is a bit harder. Level 3 is close to Grade 7 level.
+- Make exactly 2 questions for every skill at every level: 4 skills x 3 levels x 2 = 24 questions.
+- "choices" has 2 to 4 options. "answerIndex" is the 0-based index of the one correct choice.
+- "hints" has exactly 2 items. Hints help the student find the answer without giving it away.
+- "explanation" says the correct answer and a short reason.
+- Every "paragraph" and every number in "paragraphs" must be a paragraph number that exists in the lesson.
+- Refer to paragraphs by number only. Never copy paragraph text into the JSON.
+- "glossary": 3 to 8 key terms from the lesson. "en" is the English term, "fil" is the Filipino term, "meaning" is one short sentence in plain words.
+- Use short sentences everywhere. Use only facts from the lesson.`;
+
+function readEnv(name: "MODEL_ID" | "MODEL_API_KEY"): string {
+  const value = process.env[name];
+  if (!value) throw new ConfigError(name);
+  return value;
+}
+
+/** The few Responses API reply fields we read. Everything is optional on purpose. */
+interface ModelReply {
+  status?: string;
+  incomplete_details?: { reason?: string } | null;
+  output_text?: string;
+  output?: { content?: { type?: string; text?: string }[] }[];
+  usage?: { input_tokens?: number; output_tokens?: number };
+}
+
+/** Visible text from a Responses API reply. */
+function extractText(reply: ModelReply): string {
+  if (typeof reply?.output_text === "string" && reply.output_text.length > 0) {
+    return reply.output_text;
+  }
+  let text = "";
+  for (const item of Array.isArray(reply?.output) ? reply.output : []) {
+    for (const part of Array.isArray(item?.content) ? item.content : []) {
+      if (part?.type === "output_text" && typeof part.text === "string") text += part.text;
+    }
+  }
+  return text;
+}
+
+/**
+ * Ask the model for a PackDraft. Throws ConfigError for missing env vars and a
+ * plain Error for HTTP errors, timeouts, incomplete replies, or empty output.
+ * Never logs or returns the key or the lesson text.
+ */
+export async function generateDraft(lessonText: string): Promise<DraftResult> {
+  const model = readEnv("MODEL_ID");
+  const apiKey = readEnv("MODEL_API_KEY");
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), MODEL_TIMEOUT_MS);
+  try {
+    let res: Response;
+    try {
+      res = await fetch(OPENAI_URL, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model,
+          instructions: PACK_PROMPT,
+          input: lessonText,
+          text: { format: { type: "json_object" } },
+          reasoning: { effort: "low" },
+          max_output_tokens: MAX_OUTPUT_TOKENS,
+          store: false,
+        }),
+        signal: controller.signal,
+      });
+    } catch (err) {
+      if (controller.signal.aborted) throw new Error("Model call timed out");
+      throw new Error("Model call failed (network)", { cause: err });
+    }
+
+    if (!res.ok) throw new Error(`Model call failed with HTTP ${res.status}`);
+
+    const reply = (await res.json()) as ModelReply;
+    if (reply?.status === "incomplete") {
+      const reason = reply?.incomplete_details?.reason ?? "unknown";
+      throw new Error(`Model reply incomplete: ${reason}`);
+    }
+
+    const json = extractText(reply);
+    if (!json) throw new Error("Model reply had no text");
+
+    return {
+      json,
+      inputTokens: Number(reply?.usage?.input_tokens) || 0,
+      outputTokens: Number(reply?.usage?.output_tokens) || 0,
+    };
+  } finally {
+    clearTimeout(timer);
+  }
+}
