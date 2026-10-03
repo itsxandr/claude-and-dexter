@@ -21,6 +21,8 @@ export default defineConfig({
         icons: [{ src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' }],
       },
       workbox: {
+                // Save the fonts too, so text looks right with no internet.
+        globPatterns: ['**/*.{js,css,html,svg,woff2}'],
         // /api/* must always go to the network, never get the cached app page.
         // No runtime cache rule is added for /api/*.
         navigateFallbackDenylist: [/^\/api\//],

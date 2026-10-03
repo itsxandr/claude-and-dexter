@@ -167,7 +167,7 @@ Model rule for every backend task: the model name comes only from the `MODEL_ID`
   - Note: at this point the airplane-mode run only checks reopening the app and studying a saved pack. Full offline coverage (the pdf.js worker and other lazy files) is finished in the precache task (task 8).
 
 - [ ] 8. [frontend] Offline app files (precache)
-  - [ ] 8.1 [frontend] Finish the PWA precache config in `vite.config.ts`
+  - [x] 8.1 [frontend] Finish the PWA precache config in `vite.config.ts`
     - Make sure `globPatterns` covers every built file, including the lazy pdf.js chunk and the pdf.js worker, so the whole app opens offline. Keep `navigateFallbackDenylist: [/^\/api\//]` and add no runtime cache rule for `/api/*`. (The JSZip chunk is checked in task 20.)
     - Check: after `npm run build`, the generated precache list has the pdf.js worker and no `/api/` entry.
     - _Requirements: 8.3, 8.4_
