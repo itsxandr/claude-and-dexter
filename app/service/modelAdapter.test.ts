@@ -37,7 +37,8 @@ describe("generateDraft", () => {
     expect((init.headers as Record<string, string>).Authorization).toBe(`Bearer ${FAKE_KEY}`);
     const body = JSON.parse(init.body as string);
     expect(body.model).toBe("test-model");
-    expect(body.input).toBe(LESSON);
+    expect(body.input).toContain(LESSON);
+    expect(body.input).toContain("JSON");
     expect(body.text).toEqual({ format: { type: "json_object" } });
     expect(body.reasoning).toEqual({ effort: "low" });
     expect(body.max_output_tokens).toBe(MAX_OUTPUT_TOKENS);

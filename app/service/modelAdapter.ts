@@ -151,7 +151,7 @@ export async function generateDraft(lessonText: string): Promise<DraftResult> {
         body: JSON.stringify({
           model,
           instructions: PACK_PROMPT,
-          input: lessonText,
+          input: `Make the study pack as one JSON object for this lesson:\n\n${lessonText}`,
           text: { format: { type: "json_object" } },
           reasoning: { effort: "low" },
           max_output_tokens: MAX_OUTPUT_TOKENS,
@@ -166,7 +166,7 @@ export async function generateDraft(lessonText: string): Promise<DraftResult> {
 
     if (!res.ok) throw new Error(`Model call failed with HTTP ${res.status}`);
 
-    const reply = (await res.json()) as ModelReply;
+    const reply: any = await res.json();
     if (reply?.status === "incomplete") {
       const reason = reply?.incomplete_details?.reason ?? "unknown";
       throw new Error(`Model reply incomplete: ${reason}`);
