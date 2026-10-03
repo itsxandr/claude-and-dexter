@@ -9,13 +9,15 @@ import { openDB } from 'idb'
 import type { DBSchema, IDBPDatabase } from 'idb'
 import { APP_NAME } from '../config'
 import type { StudyPack, MasteryRecord, Mode } from '../logic/types'
+import type { Place } from '../logic/place'
 
 // The four object stores, their keys, and the shape of each stored value.
+// Settings keys: 'mode' (Mode), 'place' (Place).
 interface StoreSchema extends DBSchema {
   packs:    { key: string; value: StudyPack }
   mastery:  { key: string; value: MasteryRecord }
   flags:    { key: string; value: true }
-  settings: { key: string; value: Mode }
+  settings: { key: string; value: Mode | Place }
 }
 
 // One database, created with all four stores at version 1, so no later
@@ -79,9 +81,18 @@ export async function putFlag(packId: string, questionId: string): Promise<void>
 // ── Settings ───────────────────────────────────────────────────────────────
 
 export async function getMode(): Promise<Mode | undefined> {
-  return (await db()).get('settings', 'mode')
+  return (await (await db()).get('settings', 'mode')) as Mode | undefined
 }
 
 export async function putMode(mode: Mode): Promise<void> {
   await (await db()).put('settings', mode, 'mode')
+}
+
+// The Place: the screen and Study_Session to reopen on.
+export async function getPlace(): Promise<Place | undefined> {
+  return (await (await db()).get('settings', 'place')) as Place | undefined
+}
+
+export async function putPlace(place: Place): Promise<void> {
+  await (await db()).put('settings', place, 'place')
 }

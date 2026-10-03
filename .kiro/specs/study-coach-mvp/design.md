@@ -233,6 +233,7 @@ One IndexedDB database named from APP_NAME with four object stores:
 | `mastery` | pack `id` | `MasteryRecord` |
 | `flags` | `${packId}:${questionId}` | `true` |
 | `settings` | `"mode"` | `Mode` |
+| `settings` | `"place"` | `Place` (screen and session to reopen on) |
 
 `deleteAll()` deletes the whole database, then the app reloads. No `mode` setting means first run, so the Device_Check shows again (Req 8.6).
 

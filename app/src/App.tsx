@@ -1,11 +1,16 @@
 import { useState, useCallback, useEffect } from 'react';
 import './App.css';
 
-import type { Skill, ReadingLevel, StudyPack, MasteryRecord } from './logic/types'
+import type { Skill, StudyPack, MasteryRecord } from './logic/types'
 import { emptyMastery, recordAnswer } from './logic/mastery'
 import type { PathKind, SessionState } from './logic/session'
 import { startSession, pickNext, answer, skipFlagged } from './logic/session'
-import { listPacks, putPack, getMastery, putMastery } from './io/store'
+import type { Tab, Screen } from './logic/place'
+import { checkPlace } from './logic/place'
+import {
+  listPacks, putPack, getMastery, putMastery,
+  getPlace, putPlace,
+} from './io/store'
 import { packFromJson } from './logic/packJson'
 import sampleStudyPack from '../fixtures/sample.studypack.json'
 import { PathPickScreen }    from './screens/PathPickScreen';
@@ -15,19 +20,6 @@ import { ProgressScreen }    from './screens/ProgressScreen';
 import { Library }           from './screens/Library';
 import { MakePack }          from './screens/MakePack';
 import { FlashcardsScreen }  from './screens/FlashcardsScreen';
-
-// ── Types ──────────────────────────────────────────────────────────────────
-
-type Tab          = 'lessons' | 'study' | 'progress';
-
-type Screen =
-  | { name: 'lessons' }
-  | { name: 'make_pack' }
-  | { name: 'path_pick' }
-  | { name: 'summary';    path: PathKind; level: ReadingLevel }
-  | { name: 'question';   questionIndex: number; answeredCount: number }
-  | { name: 'progress' }
-  | { name: 'flashcards' };
 
 const SESSION_LENGTH = 8;
 
@@ -52,11 +44,14 @@ export default function App() {
   const [mastery, setMastery]     = useState<MasteryRecord>(emptyMastery());
   const [flagged]                 = useState<Set<string>>(new Set());
   const [session, setSession]     = useState<SessionState>(() => startSession('catchup'));
+  // False until the store has loaded; nothing shows (or saves) before then.
+  const [ready, setReady]         = useState(false);
 
   // ── Load from the store on start ───────────────────────────────────────────
   //
   // Seed the fixture pack the first time (no packs yet), then read the pack
-  // list and the current pack's mastery from the store.
+  // list and the saved Place. If the Place still fits, reopen on it;
+  // otherwise start on Lessons with the first pack.
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -65,17 +60,31 @@ export default function App() {
         await putPack(SEED_PACK);
         saved = await listPacks();
       }
+      const place = checkPlace(await getPlace(), saved);
+      const current = saved.find(p => p.id === place?.packId) ?? saved[0] ?? null;
+      const m = current !== null ? await getMastery(current.id) : undefined;
       if (cancelled) return;
+
       setPacks(saved);
-      const first = saved[0] ?? null;
-      setPack(first);
-      if (first !== null) {
-        const m = await getMastery(first.id);
-        if (!cancelled) setMastery(m ?? emptyMastery());
+      setPack(current);
+      setMastery(m ?? emptyMastery());
+      if (place !== null) {
+        setScreen(place.screen);
+        setActiveTab(place.tab);
+        setSession(place.session);
       }
+      setReady(true);
     })();
     return () => { cancelled = true };
   }, []);
+
+  // ── Save the Place on every move ───────────────────────────────────────────
+  //
+  // So a full close and reopen lands on the same screen and session.
+  useEffect(() => {
+    if (!ready) return;
+    void putPlace({ screen, tab: activeTab, packId: pack?.id ?? null, session });
+  }, [ready, screen, activeTab, pack, session]);
 
   // ── Tab navigation ────────────────────────────────────────────────────────
 
@@ -292,6 +301,10 @@ export default function App() {
         );
     }
   }
+
+  // Blank until the store has loaded, so the Lessons screen does not flash
+  // before jumping to the saved Place.
+  if (!ready) return null;
 
   const hideTabs = screen.name === 'question' || screen.name === 'summary'
                 || screen.name === 'flashcards' || screen.name === 'make_pack';
