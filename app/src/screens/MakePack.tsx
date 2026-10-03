@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import './LessonsScreen.css'
 import { makePack } from '../flow/makePack'
+import type { MakePackFailReason } from '../flow/makePack'
 import { extractPdf } from '../io/pdf'
 import { fingerprint } from '../io/fingerprint'
 import { getPack, putPack } from '../io/store'
@@ -16,6 +17,20 @@ interface MakePackProps {
   // Go back to the Library.
   onCancel: () => void
 }
+
+// A plain message for each reason makePack can fail with.
+const FAIL_MESSAGE: Record<MakePackFailReason, string> = {
+  too_long: 'This lesson is too long. Try a shorter file for now.',
+  offline: 'Making a pack needs internet once. Turn it on and try again.',
+  timeout: 'This is taking too long. Try again.',
+  server: 'The pack service had a problem. Try again.',
+  bad_json: 'The pack did not come out right. Try again.',
+  bad_format: 'The pack did not come out right. Try again.',
+  bad_coverage: 'The pack is missing some question types. Try again.',
+}
+
+// Shown when a step throws, for example pdf.js on a file with no real text.
+const THROWN_MESSAGE = 'We could not read this file. Pick a PDF with real text.'
 
 // The real make-pack flow wired to the browser IO: read the PDF, hash the
 // text, check the store, ask the Pack_Service once. See src/flow/makePack.ts.
@@ -34,6 +49,7 @@ const deps = {
 export function MakePack({ onDone, onCancel }: MakePackProps) {
   const [phase, setPhase] = useState<Phase>('idle')
   const [loadingName, setLoadingName] = useState('')
+  const [errorMsg, setErrorMsg] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   async function run(file: File) {
@@ -45,9 +61,11 @@ export function MakePack({ onDone, onCancel }: MakePackProps) {
         onDone(result.pack.id)
         return
       }
+      setErrorMsg(FAIL_MESSAGE[result.reason])
       setPhase('error')
     } catch {
       // pdf.js or any step can throw on a broken file.
+      setErrorMsg(THROWN_MESSAGE)
       setPhase('error')
     }
   }
@@ -108,7 +126,7 @@ export function MakePack({ onDone, onCancel }: MakePackProps) {
       ) : phase === 'error' ? (
         <>
           <div className="lessons-screen__error" role="alert">
-            Something went wrong.
+            {errorMsg}
           </div>
           <button className="lessons-screen__pick-btn" onClick={openPicker}>
             <span className="lessons-screen__pick-plus" aria-hidden="true">↻</span>
