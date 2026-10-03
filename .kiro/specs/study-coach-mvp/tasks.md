@@ -173,7 +173,7 @@ Model rule for every backend task: the model name comes only from the `MODEL_ID`
     - _Requirements: 8.3, 8.4_
 
 - [ ] 9. [frontend] Share and open Pack_Files
-  - [ ] 9.1 [frontend] Implement `packToJson` and `packFromJson` in `logic/packJson.ts`
+  - [x] 9.1 [frontend] Implement `packToJson` and `packFromJson` in `logic/packJson.ts`
     - `packFromJson` wraps `JSON.parse` in try/catch and then runs `formatCheck`. It never throws.
     - _Requirements: 3.12, 4.6, 4.7, 4.8_
   - [ ]* 9.2 [frontend] Write property test for the JSON round trip
