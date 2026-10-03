@@ -252,7 +252,9 @@ export function LessonsScreen({ packs, onStudy, onMakePack, onOpenPack, onShare 
           <h2 className="lessons-screen__packs-label">Your study packs</h2>
           <ul className="lessons-screen__pack-list">
             {packs.map(pack => (
-              <li key={pack.id}>
+              // One card per pack: the Study button on top, Share along the bottom.
+              // They are two separate buttons (a button cannot hold another button).
+              <li key={pack.id} className="lessons-screen__pack-card">
                 <button
                   className="lessons-screen__pack-row"
                   onClick={() => onStudy(pack.id)}
@@ -270,10 +272,25 @@ export function LessonsScreen({ packs, onStudy, onMakePack, onOpenPack, onShare 
                 </button>
                 {onShare && (
                   <button
-                    className="lessons-screen__open-btn"
+                    className="lessons-screen__pack-share"
                     onClick={() => onShare(pack)}
                     aria-label={`Share ${pack.title}`}
                   >
+                    {/* Share icon: arrow up out of a box */}
+                    <svg
+                      width="18" height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M12 3v12" />
+                      <path d="M7 8l5-5 5 5" />
+                      <path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6" />
+                    </svg>
                     Share
                   </button>
                 )}
