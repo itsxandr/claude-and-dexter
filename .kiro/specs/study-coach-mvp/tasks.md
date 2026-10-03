@@ -104,7 +104,7 @@ Model rule for every backend task: the model name comes only from the `MODEL_ID`
   - [ ] 4.3 [Tristan] [frontend] Implement `io/packClient.ts`
     - `requestDraft(lessonText)`: return `offline` without calling fetch when `navigator.onLine === false`. POST to `PACK_SERVICE_URL`, abort after `PACK_TIMEOUT_SECONDS`, and map results to `ok`, `timeout`, `server`, or `bad_json`. One request per call.
     - _Requirements: 3.4, 3.10, 3.11_
-  - [ ] 4.4 [Tristan] [frontend] Implement `io/store.ts` with `idb`
+  - [x] 4.4 [Tristan] [frontend] Implement `io/store.ts` with `idb`
     - Install `idb` (exact version). One database named from `APP_NAME` with stores `packs`, `mastery`, `flags`, `settings`, all created now so no upgrade is needed later.
     - Helpers: `getPack`, `putPack`, `listPacks`, `getMastery`, `putMastery`, `getFlags(packId)`, `putFlag`, `getMode`, `putMode`. (`deleteAll` comes in task 19.)
     - _Requirements: 8.1, 8.2_
@@ -133,7 +133,7 @@ Model rule for every backend task: the model name comes only from the `MODEL_ID`
     - File: `logic/session.end.test.ts`
     - **Property 14: Session ends at 8 or when nothing is left**
     - **Validates: Requirements 5.9**
-  - [ ] 5.7 [Tristan] [frontend] Implement `logic/mastery.ts`
+  - [x] 5.7 [Tristan] [frontend] Implement `logic/mastery.ts`
     - `emptyMastery()`, `recordAnswer`, `percent` (0 when no answers, else `round(100 × right / answered)`).
     - _Requirements: 7.6, 7.7_
   - [ ]* 5.8 [Tristan] [frontend] Write property test for mastery

@@ -3,6 +3,7 @@ import './App.css';
 
 import { samplePack } from './mock/samplePack';
 import type { Skill, ReadingLevel, StudyPack, MasteryRecord } from './logic/types'
+import { emptyMastery, recordAnswer } from './logic/mastery'
 import { PathPickScreen }    from './screens/PathPickScreen';
 import { SummaryScreen }     from './screens/SummaryScreen';
 import { QuestionScreen }    from './screens/QuestionScreen';
@@ -23,13 +24,6 @@ type Screen =
       questionIndex: number; answeredCount: number }
   | { name: 'progress' }
   | { name: 'flashcards' };
-
-const EMPTY_MASTERY: MasteryRecord = {
-  main_idea:  { answered: 0, firstTryRight: 0 },
-  detail:     { answered: 0, firstTryRight: 0 },
-  vocabulary: { answered: 0, firstTryRight: 0 },
-  inference:  { answered: 0, firstTryRight: 0 },
-};
 
 const SESSION_LENGTH = 8;
 
@@ -72,24 +66,6 @@ function sessionPickNext(
 }
 
 /**
- * TODO: Replace with mastery.ts → recordAnswer()
- */
-function sessionRecordAnswer(
-  mastery: MasteryRecord,
-  skill: Skill,
-  firstTryRight: boolean,
-): MasteryRecord {
-  const prev = mastery[skill];
-  return {
-    ...mastery,
-    [skill]: {
-      answered:      prev.answered + 1,
-      firstTryRight: prev.firstTryRight + (firstTryRight ? 1 : 0),
-    },
-  };
-}
-
-/**
  * TODO: Replace with session.ts level-adaptation logic.
  *
  * Rules (design.md):
@@ -124,7 +100,7 @@ function sessionAdaptLevel(
 export default function App() {
   const [screen, setScreen]           = useState<Screen>({ name: 'lessons' });
   const [activeTab, setActiveTab]     = useState<Tab>('lessons');
-  const [mastery, setMastery]         = useState<MasteryRecord>(EMPTY_MASTERY);
+  const [mastery, setMastery]         = useState<MasteryRecord>(emptyMastery());
   const [flagged]                     = useState<Set<string>>(new Set());
   const [answeredIds, setAnsweredIds] = useState<string[]>([]);
   const [rightStreak, setRightStreak] = useState(0);
@@ -182,7 +158,7 @@ export default function App() {
 
     // Record mastery for this question's specific skill
     const question = samplePack.questions.find(q => q.id === questionId)!;
-    setMastery(m => sessionRecordAnswer(m, question.skill as Skill, firstTryRight));
+    setMastery(m => recordAnswer(m, question.skill as Skill, firstTryRight));
 
     // Update streaks
     const newRight = firstTryRight ? rightStreak + 1 : 0;
