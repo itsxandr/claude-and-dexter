@@ -54,7 +54,6 @@ export function QuestionScreen({
   answeredCount,
   level,
   onFinish,
-  onReport,
   onClose,
 }: QuestionScreenProps) {
   const question = pack.questions[questionIndex];
@@ -154,10 +153,6 @@ export function QuestionScreen({
   const handleSeeInLesson = useCallback((n: number) => {
     setOpenPara(n);
   }, []);
-
-  function handleReport() {
-    onReport(question.id);
-  }
 
   // ── Progress ──────────────────────────────────────────────────────────────
   const progress      = answeredCount / sessionLength;
@@ -270,14 +265,6 @@ export function QuestionScreen({
             aria-disabled={!hasPicked}
           >
             {primaryLabel}
-          </button>
-
-          <button
-            className="question-screen__report"
-            onClick={handleReport}
-            aria-label="Report a problem with this question"
-          >
-            Report a problem
           </button>
         </div>
       </div>
