@@ -63,27 +63,35 @@ export default function App() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      let saved = await listPacks();
-      if (saved.length === 0) {
-        await putPack(SEED_PACK);
-        saved = await listPacks();
-      }
-      const doneOnboarding = await getOnboarded();
-      const savedLanguage = await getLanguage();
-      const place = checkPlace(await getPlace(), saved);
-      const current = saved.find(p => p.id === place?.packId) ?? saved[0] ?? null;
-      const m = current !== null ? await getMastery(current.id) : undefined;
-      if (cancelled) return;
+      try {
+        let saved = await listPacks();
+        if (saved.length === 0) {
+          await putPack(SEED_PACK);
+          saved = await listPacks();
+        }
+        const doneOnboarding = await getOnboarded();
+        const savedLanguage = await getLanguage();
+        const place = checkPlace(await getPlace(), saved);
+        const current = saved.find(p => p.id === place?.packId) ?? saved[0] ?? null;
+        const m = current !== null ? await getMastery(current.id) : undefined;
+        if (cancelled) return;
 
-      setPacks(saved);
-      setPack(current);
-      setMastery(m ?? emptyMastery());
-      setOnboarded(doneOnboarding);
-      if (savedLanguage !== undefined) setLanguageState(savedLanguage);
-      if (place !== null) {
-        setScreen(place.screen);
-        setActiveTab(place.tab);
-        setSession(place.session);
+        setPacks(saved);
+        setPack(current);
+        setMastery(m ?? emptyMastery());
+        setOnboarded(doneOnboarding);
+        if (savedLanguage !== undefined) setLanguageState(savedLanguage);
+        if (place !== null) {
+          setScreen(place.screen);
+          setActiveTab(place.tab);
+          setSession(place.session);
+        }
+      } catch {
+        // The store failed or the saved Place is broken. Start on the Library
+        // (the default screen) instead of staying blank forever.
+        if (cancelled) return;
+        setScreen({ name: 'lessons' });
+        setActiveTab('lessons');
       }
       setReady(true);
     })();
