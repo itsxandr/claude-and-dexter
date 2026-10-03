@@ -101,7 +101,7 @@ Model rule for every backend task: the model name comes only from the `MODEL_ID`
   - [x] 4.2 [Xan] [frontend] Implement `io/fingerprint.ts`
     - `fingerprint(text)` = hex SHA-256 of the UTF-8 text using `crypto.subtle.digest`.
     - _Requirements: 3.2_
-  - [ ] 4.3 [Xan] [frontend] Implement `io/packClient.ts`
+  - [x] 4.3 [Xan] [frontend] Implement `io/packClient.ts`
     - `requestDraft(lessonText)`: return `offline` without calling fetch when `navigator.onLine === false`. POST to `PACK_SERVICE_URL`, abort after `PACK_TIMEOUT_SECONDS`, and map results to `ok`, `timeout`, `server`, or `bad_json`. One request per call.
     - _Requirements: 3.4, 3.10, 3.11_
   - [x] 4.4 [Tristan] [frontend] Implement `io/store.ts` with `idb`
