@@ -36,13 +36,13 @@ Model rule for every backend task: the model name comes only from the `MODEL_ID`
     - Open the deployed URL on the phone. Check: the placeholder page loads over HTTPS, and `<deployed URL>/api/pack` returns the fixed reply.
     - _Requirements: 3.5, 3.6_
 
-- [ ] 2. [Xan] [frontend] Pure logic for the slice: paragraphs, assemble, checks
+- [x] 2. [Xan] [frontend] Pure logic for the slice: paragraphs, assemble, checks
   - [x] 2.1 [Xan] [frontend] Add `src/config.ts`, `src/logic/types.ts`, and a sample pack fixture
     - `config.ts` holds `APP_NAME`, `PACK_EXTENSION`, `MAX_LESSON_CHARS`, `PACK_TIMEOUT_SECONDS`, `PACK_FORMAT_VERSION`, `SIZE_LIMIT_BYTES`, `SESSION_LENGTH`, `PACK_SERVICE_URL`, as in the design. No browser-only code, so `api/pack.ts` can import it.
     - `types.ts` holds `Skill`, `ReadingLevel`, `RawPage`, `LessonParagraph`, `Ref`, `PackDraft`, `StudyPack`, `Question`, `MasteryRecord`, `Mode`, `Slot`.
     - `app/fixtures/sample.studypack.json`: a small hand-written `StudyPack` that follows the design's format rules. A fixture is a fixed sample file we use in tests. It has `formatVersion: 1`, a non-empty `id`, `title`, and ISO `createdAt`; 3–5 paragraphs numbered 1..N; 3 summaries for levels 1, 2, 3; a handful of Questions (unique ids, 2–4 choices, valid `answerIndex`, 2 Hints and 1 Explanation each); 2–3 glossary cards with Filipino text (for example with ñ). Every paragraph reference is in 1..N. Full coverage of all 12 Coverage_Slots is not needed.
     - _Requirements: 3.7, 3.8_
-  - [ ] 2.2 [Xan] [frontend] Implement `splitParagraphs` and `lessonText`
+  - [x] 2.2 [Xan] [frontend] Implement `splitParagraphs` and `lessonText`
     - `logic/paragraphs.ts`: `splitParagraphs(pages)`. Start a new paragraph at an empty line or a page change, collapse whitespace, drop empty paragraphs, split paragraphs over 800 characters at the last sentence end before 800, and number them 1..N.
     - `logic/pageRange.ts`: `lessonText(paras)` joins `"[n] text"` lines with blank lines. (`applyPageRange` comes in task 14.)
     - _Requirements: 2.2_
@@ -50,10 +50,10 @@ Model rule for every backend task: the model name comes only from the `MODEL_ID`
     - File: `logic/paragraphs.test.ts`
     - **Property 4: Paragraph split keeps all text, in order, numbered 1..N**
     - **Validates: Requirements 2.2**
-  - [ ] 2.4 [Xan] [frontend] Implement `assemblePack` in `logic/assemble.ts`
+  - [x] 2.4 [Xan] [frontend] Implement `assemblePack` in `logic/assemble.ts`
     - Copy paragraph text from the phone's own `LessonParagraph[]` (drop `page`), give Questions ids `q1, q2, …` in draft order, and add `formatVersion`, `id`, `title`, `createdAt`. No validation here.
     - _Requirements: 3.7, 3.8_
-  - [ ] 2.5 [Xan] [frontend] Implement `formatCheck`, `emptySlots`, `coverageCheck` in `logic/packCheck.ts`
+  - [x] 2.5 [Xan] [frontend] Implement `formatCheck`, `emptySlots`, `coverageCheck` in `logic/packCheck.ts`
     - Implement format rules 1–7 from the design by hand (no schema library). Return a pack that has only the known fields.
     - `emptySlots` lists the (Skill, Reading_Level) pairs with no Question. `coverageCheck` passes when that list is empty.
     - Add a small required unit test in `logic/packCheck.fixture.test.ts`: `app/fixtures/sample.studypack.json` passes `formatCheck`.
@@ -98,10 +98,10 @@ Model rule for every backend task: the model name comes only from the `MODEL_ID`
   - [ ] 4.1 [Tristan] [frontend] Implement `io/pdf.ts`
     - Load pdf.js with dynamic `import()` and set up its worker. Return `RawPage[]` with lines built from text items (`hasEOL`).
     - _Requirements: 2.1_
-  - [ ] 4.2 [Tristan] [frontend] Implement `io/fingerprint.ts`
+  - [ ] 4.2 [Xan] [frontend] Implement `io/fingerprint.ts`
     - `fingerprint(text)` = hex SHA-256 of the UTF-8 text using `crypto.subtle.digest`.
     - _Requirements: 3.2_
-  - [ ] 4.3 [Tristan] [frontend] Implement `io/packClient.ts`
+  - [ ] 4.3 [Xan] [frontend] Implement `io/packClient.ts`
     - `requestDraft(lessonText)`: return `offline` without calling fetch when `navigator.onLine === false`. POST to `PACK_SERVICE_URL`, abort after `PACK_TIMEOUT_SECONDS`, and map results to `ok`, `timeout`, `server`, or `bad_json`. One request per call.
     - _Requirements: 3.4, 3.10, 3.11_
   - [x] 4.4 [Tristan] [frontend] Implement `io/store.ts` with `idb`
