@@ -5,37 +5,7 @@
  * Exact StudyPack shape from design.md.
  */
 
-// ── Inline types ───────────────────────────────────────────────────────────
-
-type Skill = 'main_idea' | 'detail' | 'vocabulary' | 'inference';
-type ReadingLevel = 1 | 2 | 3;
-
-interface Ref { text: string; paragraph: number }
-
-interface Question {
-  id: string;
-  skill: Skill;
-  level: ReadingLevel;
-  prompt: string;
-  choices: string[];
-  answerIndex: number;
-  hints: [Ref, Ref];
-  explanation: Ref;
-}
-
-interface Summary { level: ReadingLevel; text: string; paragraphs: number[] }
-interface GlossaryCard { en: string; fil: string; meaning: string }
-
-export interface StudyPack {
-  formatVersion: 1;
-  id: string;
-  title: string;
-  createdAt: string;
-  paragraphs: { n: number; text: string }[];
-  summaries: Summary[];
-  questions: Question[];
-  glossary: GlossaryCard[];
-}
+import type { StudyPack } from '../logic/types'
 
 // ── Pack ───────────────────────────────────────────────────────────────────
 

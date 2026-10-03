@@ -1,5 +1,5 @@
 import './ProgressScreen.css';
-import type { StudyPack } from '../mock/samplePack';
+import type { StudyPack } from '../logic/types'
 import { MasteryBar } from '../components/MasteryBar';
 
 // ── Types ──────────────────────────────────────────────────────────────────

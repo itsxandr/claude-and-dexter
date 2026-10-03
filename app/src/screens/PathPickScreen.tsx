@@ -1,5 +1,5 @@
 import './PathPickScreen.css';
-import type { StudyPack } from '../mock/samplePack';
+import type { StudyPack } from '../logic/types'
 
 type PathKind = 'catchup' | 'practice';
 

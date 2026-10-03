@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import './FlashcardsScreen.css';
-import type { StudyPack } from '../mock/samplePack';
+import type { StudyPack } from '../logic/types'
 import { PackHeader } from '../components/PackHeader';
 
 interface FlashcardsScreenProps {

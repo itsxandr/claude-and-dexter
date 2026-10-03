@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import './LessonsScreen.css';
-import type { StudyPack } from '../mock/samplePack';
+import type { StudyPack } from '../logic/types'
 
 // ── Constants matching design.md error table ───────────────────────────────
 

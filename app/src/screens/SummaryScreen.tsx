@@ -1,5 +1,5 @@
 import './SummaryScreen.css';
-import type { StudyPack } from '../mock/samplePack';
+import type { StudyPack } from '../logic/types'
 import { PackHeader } from '../components/PackHeader';
 import { ReadAloudButton } from '../components/ReadAloudButton';
 import { ParagraphSheet } from '../components/ParagraphSheet';

@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import './App.css';
 
 import { samplePack } from './mock/samplePack';
+import type { Skill, ReadingLevel, StudyPack, MasteryRecord } from './logic/types'
 import { PathPickScreen }    from './screens/PathPickScreen';
 import { SummaryScreen }     from './screens/SummaryScreen';
 import { QuestionScreen }    from './screens/QuestionScreen';
@@ -11,8 +12,6 @@ import { FlashcardsScreen }  from './screens/FlashcardsScreen';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
-type Skill        = 'main_idea' | 'detail' | 'vocabulary' | 'inference';
-type ReadingLevel = 1 | 2 | 3;
 type PathKind     = 'catchup' | 'practice';
 type Tab          = 'lessons' | 'study' | 'progress';
 
@@ -25,10 +24,7 @@ type Screen =
   | { name: 'progress' }
   | { name: 'flashcards' };
 
-export interface MasteryRecord { answered: number; firstTryRight: number }
-export type MasteryData = Record<Skill, MasteryRecord>;
-
-const EMPTY_MASTERY: MasteryData = {
+const EMPTY_MASTERY: MasteryRecord = {
   main_idea:  { answered: 0, firstTryRight: 0 },
   detail:     { answered: 0, firstTryRight: 0 },
   vocabulary: { answered: 0, firstTryRight: 0 },
@@ -50,7 +46,7 @@ const SESSION_LENGTH = 8;
  *  - Available = not in answeredIds, not flagged.
  */
 function sessionPickNext(
-  pack: typeof samplePack,
+  pack: StudyPack,
   answeredIds: string[],
   level: ReadingLevel,
   flagged: Set<string>,
@@ -79,10 +75,10 @@ function sessionPickNext(
  * TODO: Replace with mastery.ts → recordAnswer()
  */
 function sessionRecordAnswer(
-  mastery: MasteryData,
+  mastery: MasteryRecord,
   skill: Skill,
   firstTryRight: boolean,
-): MasteryData {
+): MasteryRecord {
   const prev = mastery[skill];
   return {
     ...mastery,
@@ -128,7 +124,7 @@ function sessionAdaptLevel(
 export default function App() {
   const [screen, setScreen]           = useState<Screen>({ name: 'lessons' });
   const [activeTab, setActiveTab]     = useState<Tab>('lessons');
-  const [mastery, setMastery]         = useState<MasteryData>(EMPTY_MASTERY);
+  const [mastery, setMastery]         = useState<MasteryRecord>(EMPTY_MASTERY);
   const [flagged]                     = useState<Set<string>>(new Set());
   const [answeredIds, setAnsweredIds] = useState<string[]>([]);
   const [rightStreak, setRightStreak] = useState(0);
