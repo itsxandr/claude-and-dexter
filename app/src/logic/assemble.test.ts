@@ -41,8 +41,27 @@ describe('assemblePack', () => {
       { n: 2, text: 'Roots take in water.' },
     ])
     expect(pack.questions.map((q) => q.id)).toEqual(['q1', 'q2'])
-    expect(pack.questions[1]).toEqual({ ...draft.questions[1], id: 'q2' })
+    // The right answer may move, but it must still be the same text.
+    const q2 = pack.questions[1]
+    expect(q2.choices[q2.answerIndex]).toBe('Sun')
+    expect([...q2.choices].sort()).toEqual(['Moon', 'Sun'])
+    expect(q2.prompt).toBe(draft.questions[1].prompt)
+    expect(q2.hints).toEqual(draft.questions[1].hints)
     expect(pack.summaries).toEqual(draft.summaries)
     expect(pack.glossary).toEqual(draft.glossary)
+  })
+
+  it('does not leave every right answer in the first spot', () => {
+    const many: PackDraft = {
+      ...draft,
+      questions: Array.from({ length: 24 }, (_, i) => ({
+        ...question(`Question ${i}`),
+        choices: ['Right', 'Wrong 1', 'Wrong 2', 'Wrong 3'],
+      })),
+    }
+    const pack = assemblePack(many, paragraphs, 'abc123', 'Plants', '2025-01-01T00:00:00.000Z')
+    const spots = new Set(pack.questions.map((q) => q.answerIndex))
+    expect(spots.size).toBeGreaterThan(2)
+    for (const q of pack.questions) expect(q.choices[q.answerIndex]).toBe('Right')
   })
 })
