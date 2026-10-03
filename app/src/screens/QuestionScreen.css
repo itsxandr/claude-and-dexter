@@ -9,21 +9,21 @@
 .question-screen__scroll {
   flex: 1;
   overflow-y: auto;
-  padding: 4px 20px 16px;
+  padding: 16px 20px 16px;
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-/* ── Prompt row ──────────────────────────────────────────────── */
-.question-screen__prompt-row {
+/* ── Question: prompt on top, Read aloud under it ────────────── */
+.question-screen__question {
   display: flex;
+  flex-direction: column;
   align-items: flex-start;
-  gap: 12px;
+  gap: 10px;
 }
 
 .question-screen__prompt {
-  flex: 1;
   font-size: 22px;
   line-height: 1.3;
   font-weight: 700;

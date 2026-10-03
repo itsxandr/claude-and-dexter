@@ -257,9 +257,11 @@ export default function App() {
 
       case 'question':
         return (
-          // key= forces full remount on each new question — resets all local state
+          // key= forces full remount on each new question — resets all local state.
+          // answeredCount is in the key so a repeated question also starts fresh
+          // (new choice order, no old pick showing).
           <QuestionScreen
-            key={screen.questionIndex}
+            key={`${screen.answeredCount}-${screen.questionIndex}`}
             pack={pack}
             questionIndex={screen.questionIndex}
             sessionLength={SESSION_LENGTH}

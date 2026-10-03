@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo } from 'react';
 import './QuestionScreen.css';
 import type { StudyPack } from '../logic/types'
 import { coach } from '../logic/coach'
+import { shuffledOrder } from '../logic/choiceOrder'
 import { PackHeader } from '../components/PackHeader';
 import { ReadAloudButton } from '../components/ReadAloudButton';
 import { FeedbackPanel } from '../components/FeedbackPanel';
@@ -68,6 +69,11 @@ export function QuestionScreen({
   const [wrongTries, setWrongTries]     = useState(0);
   const [pickedIndex, setPickedIndex]   = useState<number | null>(null);
   const [openPara, setOpenPara]         = useState<number | null>(null);
+
+  // order: the choice indexes in the order they are shown (A, B, C, D).
+  // Picked once per showing, so the right answer is not always "A".
+  // pickedIndex and answerIndex still use the pack's own indexes.
+  const [order] = useState(() => shuffledOrder(question.choices.length));
 
   // ── Derived state ────────────────────────────────────────────────────────
   const hasPicked  = pickedIndex !== null;
@@ -161,7 +167,7 @@ export function QuestionScreen({
   const choiceLetters = ['A', 'B', 'C', 'D'];
   const readAloudText = [
     question.prompt,
-    ...question.choices.map((c, i) => `${choiceLetters[i]}. ${c}`),
+    ...order.map((idx, pos) => `${choiceLetters[pos]}. ${question.choices[idx]}`),
   ].join('. ');
 
   // ── Choice appearance helpers ─────────────────────────────────────────────
@@ -191,11 +197,12 @@ export function QuestionScreen({
     return base;
   }
 
-  function chipLabel(idx: number): string {
+  // idx = the pack's choice index; pos = where it is shown (0 = "A").
+  function chipLabel(idx: number, pos: number): string {
     if (isRight && idx === question.answerIndex) return '✓';
     if (isRevealed && idx === question.answerIndex) return '✓';
     if (hasPicked && isWrong && idx === pickedIndex) return '✕';
-    return choiceLetters[idx];
+    return choiceLetters[pos];
   }
 
   // Choices are disabled only when right or fully revealed.
@@ -217,15 +224,15 @@ export function QuestionScreen({
       <div className="question-screen">
         <div className="question-screen__scroll">
 
-          {/* Prompt row */}
-          <div className="question-screen__prompt-row">
+          {/* Question: full-width prompt, then Read aloud under it */}
+          <div className="question-screen__question">
             <h1 className="question-screen__prompt">{question.prompt}</h1>
             <ReadAloudButton text={readAloudText} />
           </div>
 
-          {/* Choices */}
+          {/* Choices, in the shuffled order */}
           <div className="question-screen__choices" role="list">
-            {question.choices.map((choice, idx) => (
+            {order.map((idx, pos) => (
               <button
                 key={idx}
                 className={choiceClass(idx)}
@@ -235,9 +242,9 @@ export function QuestionScreen({
                 disabled={choicesLocked}
               >
                 <span className={chipClass(idx)} aria-hidden="true">
-                  {chipLabel(idx)}
+                  {chipLabel(idx, pos)}
                 </span>
-                <span className="question-screen__choice-text">{choice}</span>
+                <span className="question-screen__choice-text">{question.choices[idx]}</span>
               </button>
             ))}
           </div>
