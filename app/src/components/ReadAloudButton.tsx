@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import './ReadAloudButton.css';
+import { useStrings } from '../i18n/language';
 
 interface ReadAloudButtonProps {
   /** Text to speak. For a question, pass prompt + choices joined by the caller. */
@@ -15,6 +16,7 @@ interface ReadAloudButtonProps {
  * Prefers local-service voices so it works offline (design.md).
  */
 export function ReadAloudButton({ text }: ReadAloudButtonProps) {
+  const t = useStrings().common;
   const [hasVoice, setHasVoice] = useState(false);
   const [speaking, setSpeaking] = useState(false);
 
@@ -77,7 +79,7 @@ export function ReadAloudButton({ text }: ReadAloudButtonProps) {
     <button
       className={`read-aloud-btn${speaking ? ' read-aloud-btn--active' : ''}`}
       onClick={handleClick}
-      aria-label={speaking ? 'Stop reading aloud' : 'Read aloud'}
+      aria-label={speaking ? t.stopAria : t.readAloud}
       aria-pressed={speaking}
     >
       {/* Speaker icon */}
@@ -98,7 +100,7 @@ export function ReadAloudButton({ text }: ReadAloudButtonProps) {
           : <path d="M16.5 8.5a5 5 0 0 1 0 7" />        /* sound wave */
         }
       </svg>
-      <span>{speaking ? 'Stop' : 'Read aloud'}</span>
+      <span>{speaking ? t.stop : t.readAloud}</span>
     </button>
   );
 }

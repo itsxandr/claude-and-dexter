@@ -2,6 +2,7 @@ import './ProgressScreen.css';
 import type { Skill, StudyPack, MasteryRecord } from '../logic/types'
 import { percent } from '../logic/mastery'
 import { MasteryBar } from '../components/MasteryBar';
+import { useStrings } from '../i18n/language';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -16,13 +17,6 @@ interface ProgressScreenProps {
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
-const SKILL_LABELS: Record<Skill, string> = {
-  main_idea:  'Main idea',
-  detail:     'Detail',
-  vocabulary: 'Vocabulary',
-  inference:  'Inference',
-};
-
 const SKILL_ORDER: Skill[] = ['main_idea', 'detail', 'vocabulary', 'inference'];
 
 // ── Component ──────────────────────────────────────────────────────────────
@@ -33,6 +27,7 @@ const SKILL_ORDER: Skill[] = ['main_idea', 'detail', 'vocabulary', 'inference'];
  * App header, 4 MasteryBars, Study again, Flashcards (hidden if glossary empty).
  */
 export function ProgressScreen({ pack, mastery, onStudyAgain, onFlashcards }: ProgressScreenProps) {
+  const t = useStrings().progress;
   const totalAnswered = SKILL_ORDER.reduce((sum, s) => sum + mastery[s].answered, 0);
   const hasGlossary   = pack.glossary.length > 0;
 
@@ -47,7 +42,7 @@ export function ProgressScreen({ pack, mastery, onStudyAgain, onFlashcards }: Pr
       </header>
 
       {/* ── Page heading ── */}
-      <h1 className="progress-screen__heading">Your progress</h1>
+      <h1 className="progress-screen__heading">{t.heading}</h1>
       <p className="progress-screen__pack-name">{pack.title}</p>
 
       {/* ── Mastery card ── */}
@@ -55,7 +50,7 @@ export function ProgressScreen({ pack, mastery, onStudyAgain, onFlashcards }: Pr
         {SKILL_ORDER.map(skill => (
           <MasteryBar
             key={skill}
-            label={SKILL_LABELS[skill]}
+            label={t.skills[skill]}
             percent={percent(mastery[skill])}
           />
         ))}
@@ -64,8 +59,8 @@ export function ProgressScreen({ pack, mastery, onStudyAgain, onFlashcards }: Pr
       {/* ── Summary line ── */}
       <p className="progress-screen__summary">
         {totalAnswered === 0
-          ? 'No questions answered yet. Pick a path to start.'
-          : `${totalAnswered} question${totalAnswered === 1 ? '' : 's'} answered across all sessions.`}
+          ? t.none
+          : t.answered(totalAnswered)}
       </p>
 
       {/* ── Actions ── */}
@@ -74,7 +69,7 @@ export function ProgressScreen({ pack, mastery, onStudyAgain, onFlashcards }: Pr
           className="progress-screen__btn progress-screen__btn--primary"
           onClick={onStudyAgain}
         >
-          Study again
+          {t.studyAgain}
         </button>
 
         {hasGlossary && (
@@ -82,7 +77,7 @@ export function ProgressScreen({ pack, mastery, onStudyAgain, onFlashcards }: Pr
             className="progress-screen__btn progress-screen__btn--outline"
             onClick={onFlashcards}
           >
-            Flashcards
+            {t.flashcards}
           </button>
         )}
       </div>

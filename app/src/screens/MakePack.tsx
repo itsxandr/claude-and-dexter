@@ -6,6 +6,7 @@ import { extractPdf } from '../io/pdf'
 import { fingerprint } from '../io/fingerprint'
 import { getPack, putPack } from '../io/store'
 import { requestDraft } from '../io/packClient'
+import { useStrings } from '../i18n/language'
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -17,20 +18,6 @@ interface MakePackProps {
   // Go back to the Library.
   onCancel: () => void
 }
-
-// A plain message for each reason makePack can fail with.
-const FAIL_MESSAGE: Record<MakePackFailReason, string> = {
-  too_long: 'This lesson is too long. Try a shorter file for now.',
-  offline: 'Making a pack needs internet once. Turn it on and try again.',
-  timeout: 'This is taking too long. Try again.',
-  server: 'The pack service had a problem. Try again.',
-  bad_json: 'The pack did not come out right. Try again.',
-  bad_format: 'The pack did not come out right. Try again.',
-  bad_coverage: 'The pack is missing some question types. Try again.',
-}
-
-// Shown when a step throws, for example pdf.js on a file with no real text.
-const THROWN_MESSAGE = 'We could not read this file. Pick a PDF with real text.'
 
 // The real make-pack flow wired to the browser IO: read the PDF, hash the
 // text, check the store, ask the Pack_Service once. See src/flow/makePack.ts.
@@ -47,9 +34,13 @@ const deps = {
  * friendly per-reason messages come later (task 12).
  */
 export function MakePack({ onDone, onCancel }: MakePackProps) {
+  const strings = useStrings()
+  const t = strings.makePack
   const [phase, setPhase] = useState<Phase>('idle')
   const [loadingName, setLoadingName] = useState('')
-  const [errorMsg, setErrorMsg] = useState('')
+  // The failure, kept as a reason (not text) so it shows in the current language.
+  // 'thrown' means a step threw, for example pdf.js on a file with no real text.
+  const [failure, setFailure] = useState<MakePackFailReason | 'thrown'>('thrown')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   async function run(file: File) {
@@ -61,11 +52,11 @@ export function MakePack({ onDone, onCancel }: MakePackProps) {
         onDone(result.pack.id)
         return
       }
-      setErrorMsg(FAIL_MESSAGE[result.reason])
+      setFailure(result.reason)
       setPhase('error')
     } catch {
       // pdf.js or any step can throw on a broken file.
-      setErrorMsg(THROWN_MESSAGE)
+      setFailure('thrown')
       setPhase('error')
     }
   }
@@ -103,38 +94,38 @@ export function MakePack({ onDone, onCancel }: MakePackProps) {
         </div>
       </header>
 
-      <h1 className="lessons-screen__heading">Make a pack</h1>
+      <h1 className="lessons-screen__heading">{t.heading}</h1>
 
       {/* ── Info card ── */}
       <div className="lessons-screen__info-card">
         <p className="lessons-screen__info-title">
-          Needs internet once to make the pack.
+          {strings.lessons.internetTitle}
         </p>
         <p className="lessons-screen__info-body">
-          After that, study with no internet.
+          {strings.lessons.internetBody}
         </p>
       </div>
 
       {phase === 'loading' ? (
         <div className="lessons-screen__loading">
           <span className="lessons-screen__spinner" aria-hidden="true" />
-          <span className="lessons-screen__loading-name">Making a pack from {loadingName}</span>
+          <span className="lessons-screen__loading-name">{t.making(loadingName)}</span>
           <span className="lessons-screen__loading-note">
-            Keep internet on until this finishes
+            {strings.lessons.keepInternet}
           </span>
         </div>
       ) : phase === 'error' ? (
         <>
           <div className="lessons-screen__error" role="alert">
-            {errorMsg}
+            {failure === 'thrown' ? t.thrown : t.fail[failure]}
           </div>
           <button className="lessons-screen__pick-btn" onClick={openPicker}>
             <span className="lessons-screen__pick-plus" aria-hidden="true">↻</span>
-            <span className="lessons-screen__pick-label">Try again</span>
+            <span className="lessons-screen__pick-label">{t.tryAgain}</span>
             <span className="lessons-screen__pick-sub">PDF</span>
           </button>
           <button className="lessons-screen__open-btn" onClick={onCancel}>
-            Back to library
+            {t.backToLibrary}
           </button>
         </>
       ) : (
@@ -143,15 +134,15 @@ export function MakePack({ onDone, onCancel }: MakePackProps) {
           <button
             className="lessons-screen__pick-btn"
             onClick={openPicker}
-            aria-label="Choose a PDF file from your phone"
+            aria-label={strings.lessons.pickAria}
           >
             <span className="lessons-screen__pick-plus" aria-hidden="true">+</span>
-            <span className="lessons-screen__pick-label">Choose a file from your phone</span>
+            <span className="lessons-screen__pick-label">{strings.lessons.pickLabel}</span>
             <span className="lessons-screen__pick-sub">PDF</span>
           </button>
 
           <button className="lessons-screen__open-btn" onClick={onCancel}>
-            Back to library
+            {t.backToLibrary}
           </button>
         </>
       )}

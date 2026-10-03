@@ -1,4 +1,5 @@
 import './MasteryBar.css';
+import { useStrings } from '../i18n/language';
 
 interface MasteryBarProps {
   /** Skill label, e.g. "Main idea" */
@@ -14,8 +15,9 @@ interface MasteryBarProps {
  * A skill with 0% shows "0% · not started yet" per design.md.
  */
 export function MasteryBar({ label, percent }: MasteryBarProps) {
+  const t = useStrings().progress;
   const clamped = Math.min(100, Math.max(0, Math.round(percent)));
-  const sublabel = clamped === 0 ? '0% · not started yet' : `${clamped}%`;
+  const sublabel = clamped === 0 ? t.notStarted : `${clamped}%`;
 
   return (
     <div className="mastery-bar">
@@ -26,7 +28,7 @@ export function MasteryBar({ label, percent }: MasteryBarProps) {
       <div
         className="mastery-bar__track"
         role="progressbar"
-        aria-label={`${label} mastery`}
+        aria-label={t.masteryAria(label)}
         aria-valuenow={clamped}
         aria-valuemin={0}
         aria-valuemax={100}

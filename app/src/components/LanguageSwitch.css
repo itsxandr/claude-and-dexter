@@ -1,0 +1,49 @@
+/* ── Small switch (Lessons app bar) ──────────────────────────── */
+.lang-switch {
+  display: flex;
+  padding: 3px;
+  gap: 2px;
+  border-radius: var(--radius-pill);
+  background: var(--color-bg-subtle);
+}
+
+.lang-switch__btn {
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: var(--radius-pill);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-ink-muted);
+  transition: background 0.15s, color 0.15s;
+}
+
+.lang-switch__btn--active {
+  background: var(--color-bg-card);
+  color: var(--color-green);
+}
+
+/* ── Large (onboarding language card) ────────────────────────── */
+.lang-switch--large {
+  flex-direction: column;
+  gap: 12px;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+}
+
+.lang-switch--large .lang-switch__btn {
+  min-height: 56px;
+  padding: 0 18px;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--color-surface);
+  background: var(--color-bg-card);
+  font-size: 18px;
+  color: var(--color-ink);
+  text-align: left;
+}
+
+.lang-switch--large .lang-switch__btn--active {
+  border-color: var(--color-green);
+  background: var(--color-green-light);
+  color: var(--color-green-dark);
+}

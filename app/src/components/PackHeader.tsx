@@ -1,4 +1,5 @@
 import './PackHeader.css';
+import { useStrings } from '../i18n/language';
 
 interface PackHeaderProps {
   title: string;
@@ -22,6 +23,7 @@ interface PackHeaderProps {
  * When `onClose` is provided, shows a close button (48 px tap target).
  */
 export function PackHeader({ title, counter, progress = 0, onClose, levelBadge }: PackHeaderProps) {
+  const t = useStrings().common;
   const hasProgress = counter !== undefined;
 
   return (
@@ -33,7 +35,7 @@ export function PackHeader({ title, counter, progress = 0, onClose, levelBadge }
             <button
               className="pack-header__close"
               onClick={onClose}
-              aria-label="Close session"
+              aria-label={t.closeSession}
             >
               ×
             </button>
@@ -44,7 +46,7 @@ export function PackHeader({ title, counter, progress = 0, onClose, levelBadge }
           {hasProgress && (
             <>
               <div className="pack-header__bar-track" role="progressbar"
-                aria-label="Progress"
+                aria-label={t.progressAria}
                 aria-valuenow={Math.round(progress * 100)}
                 aria-valuemin={0}
                 aria-valuemax={100}
@@ -72,7 +74,7 @@ export function PackHeader({ title, counter, progress = 0, onClose, levelBadge }
         </div>
 
         {/* AI label — always visible (Req 6.7) */}
-        <p className="pack-header__ai-label" aria-label="AI-generated content notice">
+        <p className="pack-header__ai-label" aria-label={t.aiNoticeAria}>
           <svg
             className="pack-header__ai-icon"
             width="14" height="14"
@@ -87,7 +89,7 @@ export function PackHeader({ title, counter, progress = 0, onClose, levelBadge }
             <line x1="12" y1="11" x2="12" y2="16.5" />
             <line x1="12" y1="7.5" x2="12" y2="7.6" />
           </svg>
-          AI-made, check with your teacher
+          {t.aiNotice}
         </p>
       </div>
     </header>

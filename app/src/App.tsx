@@ -10,7 +10,11 @@ import { checkPlace } from './logic/place'
 import {
   listPacks, putPack, getMastery, putMastery,
   getOnboarded, putOnboarded, getPlace, putPlace,
+  getLanguage, putLanguage,
 } from './io/store'
+import { LanguageContext } from './i18n/language'
+import { STRINGS, guessLanguage } from './i18n/strings'
+import type { Language } from './i18n/strings'
 import { packFromJson } from './logic/packJson'
 import sampleStudyPack from '../fixtures/sample.studypack.json'
 import { PathPickScreen }    from './screens/PathPickScreen';
@@ -48,6 +52,8 @@ export default function App() {
   // False until the store has loaded; nothing shows (or saves) before then.
   const [ready, setReady]         = useState(false);
   const [onboarded, setOnboarded] = useState(false);
+  // Before the student picks, guess from the phone's own language setting.
+  const [language, setLanguageState] = useState<Language>(() => guessLanguage(navigator.language));
 
   // ── Load from the store on start ───────────────────────────────────────────
   //
@@ -63,6 +69,7 @@ export default function App() {
         saved = await listPacks();
       }
       const doneOnboarding = await getOnboarded();
+      const savedLanguage = await getLanguage();
       const place = checkPlace(await getPlace(), saved);
       const current = saved.find(p => p.id === place?.packId) ?? saved[0] ?? null;
       const m = current !== null ? await getMastery(current.id) : undefined;
@@ -72,6 +79,7 @@ export default function App() {
       setPack(current);
       setMastery(m ?? emptyMastery());
       setOnboarded(doneOnboarding);
+      if (savedLanguage !== undefined) setLanguageState(savedLanguage);
       if (place !== null) {
         setScreen(place.screen);
         setActiveTab(place.tab);
@@ -89,6 +97,16 @@ export default function App() {
     if (!ready) return;
     void putPlace({ screen, tab: activeTab, packId: pack?.id ?? null, session });
   }, [ready, screen, activeTab, pack, session]);
+
+  // Tell the browser the page language too (screen readers and read-aloud use it).
+  useEffect(() => {
+    document.documentElement.lang = language;
+  }, [language]);
+
+  function setLanguage(next: Language) {
+    setLanguageState(next);
+    void putLanguage(next);
+  }
 
   function handleOnboardingDone() {
     setOnboarded(true);
@@ -324,12 +342,14 @@ export default function App() {
                 || screen.name === 'question' || screen.name === 'summary'
                 || screen.name === 'flashcards' || screen.name === 'make_pack';
 
+  const t = STRINGS[language];
+
   return (
-    <>
+    <LanguageContext.Provider value={{ language, setLanguage }}>
       <div className="app-content">{renderScreen()}</div>
 
       {!hideTabs && (
-        <nav className="bottom-tabs" aria-label="Main navigation">
+        <nav className="bottom-tabs" aria-label={t.navLabel}>
           {(['lessons', 'study', 'progress'] as Tab[]).map(tab => (
             <button
               key={tab}
@@ -338,11 +358,11 @@ export default function App() {
               aria-current={activeTab === tab ? 'page' : undefined}
             >
               <span className="bottom-tabs__indicator" aria-hidden="true" />
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {t.tabs[tab]}
             </button>
           ))}
         </nav>
       )}
-    </>
+    </LanguageContext.Provider>
   );
 }
