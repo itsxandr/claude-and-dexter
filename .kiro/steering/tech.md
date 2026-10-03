@@ -6,12 +6,14 @@ inclusion: always
   installable, works offline). Mobile-first, target 2GB-RAM Android phones.
 - Storage: IndexedDB on the phone. No server database.
 - Text extraction: in the browser (pdf.js for PDF, JSZip for PPTX).
-- Pack generation: one AWS Lambda endpoint calling a small Bedrock model.
-  Returns JSON only.
+- Pack generation: one Vercel function at /api/pack (same origin as the
+  PWA). It calls the OpenAI API through one adapter file,
+  service/modelAdapter.ts. Env vars: MODEL_ID and MODEL_API_KEY
+  (server-side only). Returns JSON only.
 - Personalization, hints, flashcards, progress: plain TypeScript on the
   phone. No AI calls.
 - Read-aloud: browser Web Speech API.
-- Hosting: static site on AWS (Amplify or S3 + CloudFront).
+- Hosting: Vercel (static PWA build + the /api/pack function, one project).
 - Keep the bundle small. No heavy UI libraries.
 - The app name and the pack file extension each live in one config
   constant, so they can change in one place.

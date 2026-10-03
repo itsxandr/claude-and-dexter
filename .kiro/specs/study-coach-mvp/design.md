@@ -2,32 +2,34 @@
 
 ## Overview
 
-[APP NAME] is one small React + Vite + TypeScript PWA plus one AWS Lambda function. A PWA (progressive web app) is a website that can be installed and that keeps working offline because a service worker (a small background script) saves the app files on the phone.
+[APP NAME] is one small React + Vite + TypeScript PWA plus one Vercel function, both in one Vercel project. A Vercel function is a small piece of server code that Vercel runs only when a request comes in. A PWA (progressive web app) is a website that can be installed and that keeps working offline because a service worker (a small background script) saves the app files on the phone.
 
 The design follows one idea: **all thinking happens in plain TypeScript functions on the phone, except one AI call per lesson.**
 
 - The phone reads the lesson file, splits it into numbered Source_Paragraphs, and computes the Fingerprint.
 - The phone sends only the numbered Lesson_Text to the Pack_Service once.
-- The Pack_Service asks a small Bedrock model for a pack *draft*. The draft points to paragraphs by number only. It never repeats paragraph text.
+- The Pack_Service (at `/api/pack`) asks a small AI model for a pack *draft*, through one small adapter file. The draft points to paragraphs by number only. It never repeats paragraph text.
 - The phone joins the draft with its own Source_Paragraphs to build the saved Study_Pack, checks it, and stores it in IndexedDB (the browser's built-in database).
 - From then on, studying, coaching, flashcards, and mastery are pure functions plus IndexedDB. No network.
 
-Scope is kept small for two people with about 10 hours: one web app, one Lambda, no server database, no API Gateway, no login service.
+Scope is kept small for two people with about 10 hours: one Vercel project (web app + one function), no server database, no login service.
 
 ### Key design decisions
 
 | Decision | Choice | Why |
 |---|---|---|
-| Pack_Service endpoint | Lambda Function URL, Lambda timeout 90 s | A Function URL is a built-in HTTPS address for one Lambda. Its time limit is the Lambda timeout itself (up to 15 minutes). API Gateway's default integration limit is about 29 s ([AWS re:Post](https://www.repost.aws/articles/AROecfpxHaT-S4ADBXRG8DBg/resolve-endpoint-request-timed-out-504-errors-when-api-gateway-invokes-a-lambda-function-for-long-running-operations)); raising it needs quota changes, so we do not use API Gateway. 90 s > PACK_TIMEOUT_SECONDS (60), so the phone gives up before Lambda does. |
+| Pack_Service endpoint | Vercel function at `/api/pack`, `maxDuration` 90 s | Same origin as the PWA (same address), so no CORS setup is needed and the app calls the relative URL `/api/pack`. 90 s > model-call timeout (80 s) > PACK_TIMEOUT_SECONDS (60 s), so the phone gives up first. |
+| Model call | One adapter file (`service/modelAdapter.ts`) calling the OpenAI API | The handler only knows `generateDraft()`. Switching to Amazon Bedrock or a local model later changes only that file and the env vars. |
+| API key | `MODEL_API_KEY` read with `process.env` inside the function only | The key never reaches the browser bundle or the phone. |
 | Service output | Paragraph numbers only | Smaller, faster AI output, and the AI cannot change the lesson text. The phone already has the text. |
 | Logic style | Pure functions with a thin React layer | Pure functions (same input, same output, no side effects) are easy to property-test. |
 | Storage | IndexedDB through the `idb` package (about 1 KB) | Small, promise-based, no heavy library. |
 | Validation | Hand-written checker, no schema library | Keeps the bundle small; the pack shape is small. |
 | Routing | One `screen` state value in the root component | No router library needed for about 10 screens. |
-| Hosting | Amplify Hosting (static) | Gives HTTPS, which the service worker and `crypto.subtle` (hashing) both need. |
-| PWA tooling | `vite-plugin-pwa` (Workbox precache) | Saves every built file on first load (Req 8.3). |
+| Hosting | Vercel (static PWA build + one function, one project) | Gives HTTPS, which the service worker and `crypto.subtle` (hashing) both need. One deploy for both parts. |
+| PWA tooling | `vite-plugin-pwa` (Workbox precache) | Saves every built file on first load (Req 8.3). `/api/pack` is never cached. |
 
-Research notes (rephrased for compliance with licensing restrictions): Lambda's maximum timeout is 900 s (15 min) and its default is 3 s, so the timeout must be set on purpose ([middleware.io](https://middleware.io/blog/aws-lambda-timeout-best-practices/)). Function URLs are a common way around the API Gateway 29–30 s limit ([CodeStax](https://codestax.medium.com/hit-a-30s-timeout-heres-how-lambda-function-urls-save-the-day-d2e4912c6882)).
+Research notes (rephrased for compliance with licensing restrictions): with fluid compute turned on (the default for new projects), a Vercel function on the Hobby plan has a default and maximum duration of 300 s, and Pro allows up to 800 s. So `maxDuration: 90` fits every plan ([Vercel: configuring duration](https://vercel.com/docs/functions/configuring-functions/duration), [Vercel: function limits](https://vercel.com/docs/functions/limitations)).
 
 ## Architecture
 
@@ -43,9 +45,15 @@ flowchart LR
     UI --> IO
     IO --> DB
   end
-  Host["Amplify Hosting\n(static files)"] -. first load only .-> SW
-  IO -- "POST lessonText\n(once per new lesson)" --> Lambda["Lambda Function URL\nPack_Service\ntimeout 90 s"]
-  Lambda --> Bedrock["Bedrock small model"]
+  subgraph Vercel["Vercel project (one origin, HTTPS)"]
+    Static["Static PWA build"]
+    Fn["/api/pack\nPack_Service function\nmaxDuration 90 s"]
+    Adapter["service/modelAdapter.ts\n(holds MODEL_API_KEY)"]
+    Fn --> Adapter
+  end
+  Static -. first load only .-> SW
+  IO -- "POST /api/pack { lessonText }\n(once per new lesson, never cached)" --> Fn
+  Adapter --> Model["OpenAI API\nMODEL_ID"]
 ```
 
 ### Making a pack (the only networked flow)
@@ -55,7 +63,8 @@ sequenceDiagram
   participant PM as Pack_Maker
   participant App
   participant DB as IndexedDB
-  participant PS as Pack_Service (Lambda)
+  participant PS as Pack_Service (/api/pack)
+  participant AD as Model adapter
   PM->>App: pick Lesson_File
   App->>App: check type + size limit (mode)
   App->>App: extract text, split into Source_Paragraphs
@@ -68,8 +77,10 @@ sequenceDiagram
     App->>PM: open saved pack (no network)
   else not found
     App->>App: offline? show "needs internet once"
-    App->>PS: POST { lessonText } (abort after 60 s)
-    PS->>PS: prompt model, parse JSON, keep nothing
+    App->>PS: POST /api/pack { lessonText } (abort after 60 s)
+    PS->>AD: generateDraft(lessonText) (abort after 80 s)
+    AD-->>PS: { json, inputTokens, outputTokens }
+    PS->>PS: strip fences, JSON.parse, log tokens + seconds, keep nothing
     PS-->>App: PackDraft (paragraph numbers only)
     App->>App: assemble StudyPack = draft + Source_Paragraphs + ids
     App->>App: Pack_Format_Check + Full_Coverage_Check
@@ -81,7 +92,10 @@ sequenceDiagram
 ### Project layout
 
 ```
-app/
+app/                       Vercel project root (Root Directory = app)
+  vercel.json              maxDuration 90 for api/pack.ts
+  api/pack.ts              the Pack_Service function (POST /api/pack)
+  service/modelAdapter.ts  the only file that knows the AI provider
   src/config.ts            APP_NAME, PACK_EXTENSION, MAX_LESSON_CHARS,
                            PACK_TIMEOUT_SECONDS, PACK_SERVICE_URL, size limits
   src/logic/               pure, no browser APIs (all property-tested)
@@ -92,11 +106,13 @@ app/
     pdf.ts  pptx.ts  fingerprint.ts  packClient.ts
     store.ts  packFile.ts  speech.ts
   src/screens/             React screens
-service/
-  handler.ts               the Pack_Service Lambda
 ```
 
+The adapter lives in `service/`, not in `api/`, because Vercel turns every file in `api/` into its own public endpoint.
+
 Heavy code (pdf.js, JSZip) is loaded with dynamic `import()` only on the Make Pack screen, so students who only study never parse it on start-up. It is still precached so the app is complete offline.
+
+The service worker precaches only the files in the Vite build output, so `/api/pack` is never in the precache list. The Workbox setting `navigateFallbackDenylist: [/^\/api\//]` makes sure `/api/*` requests always go to the network and never get the cached app page instead. No runtime caching rule is added for `/api/*`. Everything else about offline behavior stays the same.
 
 ## Components and Interfaces
 
@@ -110,10 +126,10 @@ export const PACK_TIMEOUT_SECONDS = 60;
 export const PACK_FORMAT_VERSION = 1;
 export const SIZE_LIMIT_BYTES = { lite: 5 * 1024 * 1024, standard: 20 * 1024 * 1024 };
 export const SESSION_LENGTH = 8;
-export const PACK_SERVICE_URL = import.meta.env.VITE_PACK_SERVICE_URL;
+export const PACK_SERVICE_URL = "/api/pack"; // same origin, relative URL
 ```
 
-The Lambda keeps its own copy of `MAX_LESSON_CHARS` (it is a separate deploy). A comment in both files says to change them together.
+`config.ts` has no browser-only code, so `api/pack.ts` imports `MAX_LESSON_CHARS` from it. There is one copy of the limit.
 
 ### Device_Check (`logic/deviceCheck.ts`) — Req 1.1–1.4
 
@@ -298,19 +314,43 @@ Uses `speechSynthesis`. Voices load late on Android, so the app waits for the `v
 
 A `PackHeader` component used by every screen that shows pack content. It always renders "AI-made, check with your teacher".
 
-### Pack_Service (`service/handler.ts`) — Req 3.5, 3.6
+### Pack_Service (`api/pack.ts`) — Req 3.5, 3.6
 
-- Node.js 20 Lambda, Function URL with `AuthType: NONE`, CORS allowing only the app's Amplify origin and `POST`.
-- **Timeout 90 s** (above PACK_TIMEOUT_SECONDS = 60). Memory 512 MB.
-- **Reserved concurrency 3**: at most 3 runs at once, which caps cost if the public URL is abused.
-- Request: `{ lessonText: string }`. Rejects with 400 if missing or longer than MAX_LESSON_CHARS.
-- Calls Bedrock `Converse` on one small model (for example Amazon Nova Lite or Claude Haiku, whichever is enabled in the region) with a fixed prompt, `maxTokens` about 8000, and an SDK request timeout of 80 s.
-- The prompt asks for JSON only in the `PackDraft` shape, **2 Questions per Coverage_Slot (24 total)** so the Pack_Maker can remove bad ones, short sentences, Reading_Level 1 = very simple words, and references by paragraph number only.
-- Strips code fences, runs `JSON.parse`. Success → 200 with the JSON. Parse failure → 502 `{ "error": "bad_model_output" }`. Bedrock error → 502 `{ "error": "model_failed" }`.
-- Keeps nothing: no database, no S3, no file writes. Logs only status code, text length, and duration, never the text or the pack.
-- IAM role: `bedrock:InvokeModel` on that one model ARN, plus basic logging.
+- A Node.js Vercel function at `POST /api/pack`, same origin as the PWA, so no CORS config. Other methods get 405.
+- **`maxDuration` 90 s**, set in `vercel.json`:
+  ```json
+  { "functions": { "api/pack.ts": { "maxDuration": 90 } } }
+  ```
+  Order of time limits: phone 60 s < model call 80 s < function 90 s, so the phone always gives up first.
+- Request: `{ lessonText: string }`. Rejects with 400 `{ "error": "bad_request" }` if missing or longer than MAX_LESSON_CHARS.
+- Calls `generateDraft(lessonText)` from the adapter. It does not know which AI provider is used.
+- Strips code fences, runs `JSON.parse`. Success → 200 with the JSON. Parse failure → 502 `{ "error": "bad_model_output" }`. Adapter error or timeout → 502 `{ "error": "model_failed" }`.
+- Keeps nothing: no database, no file writes.
+- Logs one line per request: status code, input tokens, output tokens, and seconds taken. It never logs the lesson text or the pack.
 
-**Security note:** the Function URL has no login, because the product has no accounts. Anyone with the URL could call it. Mitigations are the reserved concurrency cap, the input length cap, a CORS origin limit (this only stops other websites, not scripts), and an optional AWS Budgets alert. This is acceptable for a demo; a real launch would need a rate limit or a shared app key.
+### Model adapter (`service/modelAdapter.ts`)
+
+An adapter is a small file that hides which outside service we use behind one simple function.
+
+```ts
+interface DraftResult { json: string; inputTokens: number; outputTokens: number }
+function generateDraft(lessonText: string): Promise<DraftResult>;
+```
+
+- Calls the OpenAI API with plain `fetch` (no SDK, so fewer dependencies), with an `AbortController` timeout of 80 s.
+- Env vars: `MODEL_ID` (value `gpt-6-luna`) and `MODEL_API_KEY`. Both are read with `process.env` inside the function only.
+- Asks for **JSON-only output** (OpenAI's JSON output mode or structured output) and a **low reasoning effort** (`"low"`) so generation is fast. Output token cap about 8000.
+- Token counts come from the `usage` part of the response.
+- The fixed prompt asks for the `PackDraft` shape only, **2 Questions per Coverage_Slot (24 total)** so the Pack_Maker can remove bad ones, short sentences, Reading_Level 1 = very simple words, and references by paragraph number only (never paragraph text).
+- **To confirm at build time:** we could not check that `gpt-6-luna` exists, or the exact parameter names it supports for JSON output and reasoning effort. Check them against the OpenAI API docs before writing this file.
+- **Changing provider later:** to use Amazon Bedrock or a local model instead, rewrite only this file and change the env vars. `api/pack.ts`, the prompt rules, and the app stay the same.
+
+**Keeping the key secret:**
+- `MODEL_API_KEY` never has the `VITE_` prefix. Vite only puts `VITE_` variables into the browser bundle, so the key cannot end up on the phone.
+- The key is never sent in any response or log.
+- The key is set in the Vercel project's environment variables. Local copies live in `.env.local`, and `.gitignore` must list `.env*` so no env file is ever committed. (Today `.gitignore` lists only `.env`; the setup task widens it.)
+
+**Security note:** `/api/pack` has no login, because the product has no accounts. Anyone who finds the URL could call it with a script. Mitigations: the input length cap, browser use only from our own origin (this does not stop scripts), the API key never leaving the server, Vercel's own function limits, and (suggested) a spend limit and budget alert on the OpenAI project. This is fine for a demo. A real launch would need rate limiting or an app key.
 
 ## Data Models
 
@@ -494,7 +534,7 @@ Every error shows a short, friendly message in plain words. Nothing half-done is
 | IndexedDB write fails (storage full) | `store.ts` | "Your phone storage is full." | No |
 | Missing paragraph number at display time | cannot happen after `formatCheck`; link hidden as a guard | — | — |
 
-The Lambda never returns lesson text in errors. It returns only `{ "error": "<code>" }` with status 400 or 502. A Lambda timeout at 90 s can only happen after the phone has already given up at 60 s.
+The function never returns lesson text in errors. It returns only `{ "error": "<code>" }` with status 400, 405, or 502. The model call stops at 80 s and the function at 90 s, both after the phone has already given up at 60 s.
 
 ## Testing Strategy
 
@@ -520,11 +560,12 @@ Kept few, for things that do not vary much with input:
 - Scanned check on empty pages.
 - Pack file name ends with `PACK_EXTENSION`.
 - Pack flow with a mocked client and store: Fingerprint match opens the saved pack and never calls the service; no match calls it exactly once; timeout, HTTP error, and bad draft save nothing.
-- Lambda handler with a mocked Bedrock client: valid JSON → 200; fenced JSON → 200; garbage → 502; text over MAX_LESSON_CHARS → 400; logs never contain the lesson text.
+- `api/pack.ts` handler with a mocked adapter: valid JSON → 200; fenced JSON → 200; garbage → 502; adapter throws → 502; text over MAX_LESSON_CHARS → 400; the log line has status, token counts, and seconds, and never the lesson text.
 
 ### Integration and device checks (manual, about 30 minutes)
 
-- One live Pack_Service call with a real sample PDF; record the time (must be under 60 s).
+- One live call to the deployed `/api/pack` with a real sample PDF; record the time (must be under 60 s) and check the Vercel log shows token counts and seconds but no lesson text.
+- In the deployed app, search the built JS files for the key: it must not be there.
 - Offline: load the app once, turn on airplane mode, reload, and open a saved pack.
 - **Reference_Device run (Req 8.7)**: Realme C25s, Chrome, Lite_Mode, airplane mode. Open pack → pick Path → read summary → answer 8 questions (get hints and a reveal) → open a Source_Paragraph → Read_Aloud → flashcards to the end → Mastery_Bars. Pass = no error messages.
 - Share a Pack_File to a second phone through Messenger or Bluetooth and open it there.

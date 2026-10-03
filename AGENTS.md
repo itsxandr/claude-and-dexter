@@ -28,6 +28,7 @@
   understand the lesson file the teacher sent. The app turns that file into a
   study pack once, then coaches the student fully offline on a low-end phone.
 - App name is not final; write [APP NAME].
-- Stack: React + Vite + TypeScript PWA, IndexedDB for storage, one AWS Lambda
-  endpoint calling a small Bedrock model, static hosting on AWS.
+- Stack: React + Vite + TypeScript PWA, IndexedDB for storage, hosted on
+  Vercel. One Vercel function at /api/pack calls the OpenAI API through
+  service/modelAdapter.ts (env vars MODEL_ID and MODEL_API_KEY, server-side only).
 - Full requirements: .kiro/specs/study-coach-mvp/requirements.md
