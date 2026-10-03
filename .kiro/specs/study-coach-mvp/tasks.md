@@ -94,17 +94,17 @@ Model rule for every backend task: the model name comes only from the `MODEL_ID`
     - Use fake values such as `test-model` in tests, never a real model name.
     - _Requirements: 3.5, 3.6_
 
-- [ ] 4. [Xan] [frontend] Thin IO for the slice
-  - [ ] 4.1 [Xan] [frontend] Implement `io/pdf.ts`
+- [ ] 4. [Tristan] [frontend] Thin IO for the slice
+  - [ ] 4.1 [Tristan] [frontend] Implement `io/pdf.ts`
     - Load pdf.js with dynamic `import()` and set up its worker. Return `RawPage[]` with lines built from text items (`hasEOL`).
     - _Requirements: 2.1_
-  - [ ] 4.2 [Xan] [frontend] Implement `io/fingerprint.ts`
+  - [ ] 4.2 [Tristan] [frontend] Implement `io/fingerprint.ts`
     - `fingerprint(text)` = hex SHA-256 of the UTF-8 text using `crypto.subtle.digest`.
     - _Requirements: 3.2_
-  - [ ] 4.3 [Xan] [frontend] Implement `io/packClient.ts`
+  - [ ] 4.3 [Tristan] [frontend] Implement `io/packClient.ts`
     - `requestDraft(lessonText)`: return `offline` without calling fetch when `navigator.onLine === false`. POST to `PACK_SERVICE_URL`, abort after `PACK_TIMEOUT_SECONDS`, and map results to `ok`, `timeout`, `server`, or `bad_json`. One request per call.
     - _Requirements: 3.4, 3.10, 3.11_
-  - [ ] 4.4 [Xan] [frontend] Implement `io/store.ts` with `idb`
+  - [ ] 4.4 [Tristan] [frontend] Implement `io/store.ts` with `idb`
     - Install `idb` (exact version). One database named from `APP_NAME` with stores `packs`, `mastery`, `flags`, `settings`, all created now so no upgrade is needed later.
     - Helpers: `getPack`, `putPack`, `listPacks`, `getMastery`, `putMastery`, `getFlags(packId)`, `putFlag`, `getMode`, `putMode`. (`deleteAll` comes in task 19.)
     - _Requirements: 8.1, 8.2_
@@ -149,7 +149,7 @@ Model rule for every backend task: the model name comes only from the `MODEL_ID`
   - [ ] 6.2 [Xan] [frontend] Write unit tests for the make-pack flow with mocks
     - File: `src/flow/makePack.test.ts`. Cases: Fingerprint match opens the saved pack and never calls `requestDraft`; no match calls it exactly once and saves; timeout, server error, failed format check, and failed coverage check all save nothing.
     - _Requirements: 3.3, 3.4, 3.9, 3.10_
-  - [ ] 6.3 [Xan] [frontend] Add the Library and Make Pack screens
+  - [ ] 6.3 [Tristan] [frontend] Add the Library and Make Pack screens
     - `App.tsx` holds one `screen` state value (no router). Stand-in: mode is hard-coded to Standard_Mode.
     - `screens/Library.tsx`: list saved packs, button "Make a pack".
     - `screens/MakePack.tsx`: plain file input, calls `makePack`, shows a simple "Something went wrong" + "Try again" on failure, opens the pack on success.
