@@ -6,6 +6,7 @@ import { emptyMastery, recordAnswer } from './logic/mastery'
 import type { PathKind, SessionState } from './logic/session'
 import { startSession, pickNext, answer, skipFlagged } from './logic/session'
 import { listPacks, putPack, getMastery, putMastery } from './io/store'
+import { packFromJson } from './logic/packJson'
 import sampleStudyPack from '../fixtures/sample.studypack.json'
 import { PathPickScreen }    from './screens/PathPickScreen';
 import { SummaryScreen }     from './screens/SummaryScreen';
@@ -104,6 +105,17 @@ export default function App() {
 
   function handleMakePack() {
     setScreen({ name: 'make_pack' });
+  }
+
+  // Open a shared Pack_File: run it through packFromJson, and if it is a valid
+  // pack, save it (same id replaces the old one) and refresh the list. Returns
+  // whether the file was a valid pack so the Library can show an error if not.
+  async function handleImportPack(text: string): Promise<boolean> {
+    const result = packFromJson(text);
+    if (!result.ok) return false;
+    await putPack(result.pack);
+    setPacks(await listPacks());
+    return true;
   }
 
   // A pack was just made (or matched an existing one): refresh the list from
@@ -210,6 +222,7 @@ export default function App() {
           packs={packs}
           onStudy={handleStudyFromLesson}
           onMakePack={handleMakePack}
+          onImport={handleImportPack}
         />
       );
     }

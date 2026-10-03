@@ -20,6 +20,17 @@ interface LessonsScreenProps {
    * runs the real make-pack flow. Left unset, the stand-in picker is used.
    */
   onMakePack?: () => void;
+  /**
+   * When set, "Open a pack file" reads the file text and hands it off here. The
+   * caller runs packFromJson + saves the pack, and returns whether it was a
+   * valid pack. Left unset, the stand-in parser is used.
+   */
+  onOpenPack?: (text: string) => Promise<boolean>;
+  /**
+   * When set, each saved pack row shows a "Share" button that calls this. The
+   * caller turns the pack into a Pack_File with packToJson and shares it.
+   */
+  onShare?: (pack: StudyPack) => void;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -55,7 +66,7 @@ function mbStr(bytes: number) {
  *  - JSON.parse + basic id check. Bad file → "This file is not a valid pack."
  *  - TODO: replace with Xan's packFromJson + formatCheck.
  */
-export function LessonsScreen({ packs, onStudy, onMakePack }: LessonsScreenProps) {
+export function LessonsScreen({ packs, onStudy, onMakePack, onOpenPack, onShare }: LessonsScreenProps) {
   const [phase, setPhase]   = useState<Phase>('idle');
   const [errorMsg, setErrorMsg] = useState('');
   const [loadingName, setLoadingName] = useState('');
@@ -115,15 +126,28 @@ export function LessonsScreen({ packs, onStudy, onMakePack }: LessonsScreenProps
 
   async function handlePackFile(file: File) {
     setErrorMsg('');
+
+    // Real path: hand the file text to the caller, which runs packFromJson and
+    // saves the pack. It returns whether the file was a valid pack.
+    if (onOpenPack) {
+      const text = await file.text();
+      const ok = await onOpenPack(text);
+      if (!ok) {
+        setErrorMsg('This file is not a valid pack.');
+        setPhase('error');
+      } else {
+        setPhase('idle');
+      }
+      return;
+    }
+
+    // Stand-in path (no caller): a parseable JSON with an id is "valid".
     try {
       const text   = await file.text();
       const parsed = JSON.parse(text);
-      // Basic check — a real pack must have an id field
-      // TODO: Replace with Xan's packFromJson + formatCheck
       if (typeof parsed !== 'object' || parsed === null || !('id' in parsed)) {
         throw new Error('invalid');
       }
-      // For now, treat any parseable JSON with an id as "valid" and go to study
       setPhase('idle');
       onStudy(parsed.id as string);
     } catch {
@@ -244,6 +268,15 @@ export function LessonsScreen({ packs, onStudy, onMakePack }: LessonsScreenProps
                     Study
                   </span>
                 </button>
+                {onShare && (
+                  <button
+                    className="lessons-screen__open-btn"
+                    onClick={() => onShare(pack)}
+                    aria-label={`Share ${pack.title}`}
+                  >
+                    Share
+                  </button>
+                )}
               </li>
             ))}
           </ul>
