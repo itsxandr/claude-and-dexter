@@ -44,8 +44,8 @@ function mbStr(bytes: number) {
 /**
  * LessonsScreen  (design-ref 1a)
  *
- * File picker (PDF / PPTX):
- *  - Checks type: "Please pick a PDF or PPTX file." (exact error text from design.md)
+ * File picker (PDF):
+ *  - Checks type: "Please pick a PDF file."
  *  - Checks size (20 MB): "This file is X MB. The limit in Lite mode is 5 MB."
  *    or "…Standard mode is 20 MB." depending on data-mode attr. (design.md error table)
  *  - If OK → loading state → TODO: Xan's importer + packClient; for now goes to Path pick
@@ -76,7 +76,7 @@ export function LessonsScreen({ packs, onStudy, onMakePack }: LessonsScreenProps
 
     // Type check — exact text from design.md error table
     if (type === 'unsupported') {
-      setErrorMsg('Please pick a PDF or PPTX file.');
+      setErrorMsg('Please pick a PDF file.');
       setPhase('error');
       return;
     }
@@ -147,7 +147,7 @@ export function LessonsScreen({ packs, onStudy, onMakePack }: LessonsScreenProps
       <input
         ref={lessonInputRef}
         type="file"
-        accept=".pdf,.pptx"
+        accept=".pdf,application/pdf"
         className="lessons-screen__file-input"
         aria-hidden="true"
         tabIndex={-1}
@@ -163,16 +163,12 @@ export function LessonsScreen({ packs, onStudy, onMakePack }: LessonsScreenProps
         onChange={onPackChange}
       />
 
-      {/* ── AppName header ── */}
+      {/* ── App header ── */}
       <header className="lessons-screen__appbar">
         <div className="lessons-screen__brand">
           <span className="lessons-screen__diamond" aria-hidden="true" />
-          <span className="lessons-screen__appname">AppName</span>
+          <span className="lessons-screen__appname">[APP NAME]</span>
         </div>
-        <span className="lessons-screen__offline-chip">
-          <span className="lessons-screen__offline-dot" aria-hidden="true" />
-          Offline ready
-        </span>
       </header>
 
       <h1 className="lessons-screen__heading">Add a lesson</h1>
@@ -240,6 +236,7 @@ export function LessonsScreen({ packs, onStudy, onMakePack }: LessonsScreenProps
                   <span className="lessons-screen__pack-info">
                     <span className="lessons-screen__pack-name">{pack.title}</span>
                     <span className="lessons-screen__pack-meta">
+                      {pack.id.startsWith('sample-') ? 'Sample · ' : ''}
                       {pack.questions.length} questions · saved on phone
                     </span>
                   </span>

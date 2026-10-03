@@ -30,7 +30,7 @@ const SKILL_ORDER: Skill[] = ['main_idea', 'detail', 'vocabulary', 'inference'];
 /**
  * ProgressScreen
  *
- * AppName header, 4 MasteryBars, Study again, Flashcards (hidden if glossary empty).
+ * App header, 4 MasteryBars, Study again, Flashcards (hidden if glossary empty).
  */
 export function ProgressScreen({ pack, mastery, onStudyAgain, onFlashcards }: ProgressScreenProps) {
   const totalAnswered = SKILL_ORDER.reduce((sum, s) => sum + mastery[s].answered, 0);
@@ -38,16 +38,12 @@ export function ProgressScreen({ pack, mastery, onStudyAgain, onFlashcards }: Pr
 
   return (
     <main className="progress-screen">
-      {/* ── AppName header ── */}
+      {/* ── App header ── */}
       <header className="progress-screen__appbar">
         <div className="progress-screen__brand">
           <span className="progress-screen__diamond" aria-hidden="true" />
-          <span className="progress-screen__appname">AppName</span>
+          <span className="progress-screen__appname">[APP NAME]</span>
         </div>
-        <span className="progress-screen__offline-chip">
-          <span className="progress-screen__offline-dot" aria-hidden="true" />
-          Offline ready
-        </span>
       </header>
 
       {/* ── Page heading ── */}

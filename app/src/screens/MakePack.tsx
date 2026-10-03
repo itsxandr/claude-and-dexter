@@ -77,16 +77,12 @@ export function MakePack({ onDone, onCancel }: MakePackProps) {
         onChange={onFileChange}
       />
 
-      {/* ── AppName header ── */}
+      {/* ── App header ── */}
       <header className="lessons-screen__appbar">
         <div className="lessons-screen__brand">
           <span className="lessons-screen__diamond" aria-hidden="true" />
-          <span className="lessons-screen__appname">AppName</span>
+          <span className="lessons-screen__appname">[APP NAME]</span>
         </div>
-        <span className="lessons-screen__offline-chip">
-          <span className="lessons-screen__offline-dot" aria-hidden="true" />
-          Offline ready
-        </span>
       </header>
 
       <h1 className="lessons-screen__heading">Make a pack</h1>
