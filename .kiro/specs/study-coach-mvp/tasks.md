@@ -83,7 +83,7 @@ Model rule for every backend task: the model name comes only from the `MODEL_ID`
     - Fixed prompt: return only the `PackDraft` shape, 2 Questions per Coverage_Slot (24 total), short sentences, Reading_Level 1 = very simple words, refer to paragraphs by number only.
     - Return `{ json, inputTokens, outputTokens }` from the reply's `usage`.
     - _Requirements: 3.5, 3.7, 3.8_
-  - [ ] 3.3 [Xan] [backend] Replace the stub in `api/pack.ts` with the real handler
+  - [x] 3.3 [Xan] [backend] Replace the stub in `api/pack.ts` with the real handler
     - Non-POST → 405. Missing `lessonText`, or longer than `MAX_LESSON_CHARS` (imported from `src/config.ts`) → 400 `{ "error": "bad_request" }`.
     - Call `generateDraft`, strip code fences, `JSON.parse`. Success → 200 with the JSON. Parse failure → 502 `bad_model_output`. Adapter error or timeout → 502 `model_failed`. Missing env var → 500 `{ "error": "not_configured" }`.
     - Keep nothing. Log one line per request: status, input tokens, output tokens, seconds. Never log the lesson text, the pack, or the key.
