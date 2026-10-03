@@ -142,7 +142,7 @@ Model rule for every backend task: the model name comes only from the `MODEL_ID`
     - **Validates: Requirements 7.6, 7.7**
 
 - [ ] 6. [Xan] [Tristan] [frontend] Wire the vertical slice together
-  - [ ] 6.1 [Xan] [frontend] Implement the make-pack flow in `src/flow/makePack.ts`
+  - [x] 6.1 [Xan] [frontend] Implement the make-pack flow in `src/flow/makePack.ts`
     - `makePack(file, deps)` with injected `extract`, `fingerprint`, `store`, `requestDraft`, so it can be tested without a browser. Steps: extract → `splitParagraphs` → `lessonText` → Fingerprint → if a pack with this id exists, return it (no network) → else `requestDraft` once → `assemblePack` → `formatCheck` + `coverageCheck` → save only if both pass.
     - Return `{ ok: true, pack, isNew }` or `{ ok: false, reason }`. Stand-in for now: if text is over `MAX_LESSON_CHARS`, return `too_long` (page range comes in task 14).
     - _Requirements: 2.1, 2.2, 3.2, 3.3, 3.4, 3.9, 3.10_
