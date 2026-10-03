@@ -18,14 +18,14 @@ Model rule for every backend task: the model name comes only from the `MODEL_ID`
 
 ## Tasks
 
-- [ ] 1. [frontend] [backend] Scaffold the project (setup only, no logic)
-  - [x] 1.1 [frontend] Create the Vite + React + TypeScript PWA in `app/`
+- [ ] 1. [Xan] [frontend] [backend] Scaffold the project (setup only, no logic)
+  - [x] 1.1 [Xan] [frontend] Create the Vite + React + TypeScript PWA in `app/`
     - Run the Vite React-TS template in `app/`. Add `vite-plugin-pwa` with the default Workbox precache and `navigateFallbackDenylist: [/^\/api\//]`, so `/api/*` always goes to the network.
     - Add a short web app manifest (name `[APP NAME]`, one icon). `App.tsx` shows one placeholder line only.
     - Add Vitest and fast-check as dev dependencies with exact pinned versions. Add the scripts `"test": "vitest --run"` and `"build"`.
     - Check: `npm run build` and `npm test` (no tests yet) both finish without errors.
     - _Requirements: 8.1, 8.3_
-  - [ ] 1.2 [backend] Add the Vercel function stub, vercel.json, env example, and deploy the stub
+  - [ ] 1.2 [Xan] [backend] Add the Vercel function stub, vercel.json, env example, and deploy the stub
     - `app/api/pack.ts`: a Node.js handler that returns a fixed reply, for example `{ "ok": true, "stub": true }` with status 200.
     - `app/vercel.json`: `{ "functions": { "api/pack.ts": { "maxDuration": 90 } } }`.
     - `app/.env.example`: the lines `MODEL_ID=` and `MODEL_API_KEY=` with empty values.
@@ -36,125 +36,125 @@ Model rule for every backend task: the model name comes only from the `MODEL_ID`
     - Open the deployed URL on the phone. Check: the placeholder page loads over HTTPS, and `<deployed URL>/api/pack` returns the fixed reply.
     - _Requirements: 3.5, 3.6_
 
-- [ ] 2. [frontend] Pure logic for the slice: paragraphs, assemble, checks
-  - [ ] 2.1 [frontend] Add `src/config.ts`, `src/logic/types.ts`, and a sample pack fixture
+- [ ] 2. [Xan] [frontend] Pure logic for the slice: paragraphs, assemble, checks
+  - [ ] 2.1 [Xan] [frontend] Add `src/config.ts`, `src/logic/types.ts`, and a sample pack fixture
     - `config.ts` holds `APP_NAME`, `PACK_EXTENSION`, `MAX_LESSON_CHARS`, `PACK_TIMEOUT_SECONDS`, `PACK_FORMAT_VERSION`, `SIZE_LIMIT_BYTES`, `SESSION_LENGTH`, `PACK_SERVICE_URL`, as in the design. No browser-only code, so `api/pack.ts` can import it.
     - `types.ts` holds `Skill`, `ReadingLevel`, `RawPage`, `LessonParagraph`, `Ref`, `PackDraft`, `StudyPack`, `Question`, `MasteryRecord`, `Mode`, `Slot`.
     - `app/fixtures/sample.studypack.json`: a small hand-written `StudyPack` that follows the design's format rules. A fixture is a fixed sample file we use in tests. It has `formatVersion: 1`, a non-empty `id`, `title`, and ISO `createdAt`; 3–5 paragraphs numbered 1..N; 3 summaries for levels 1, 2, 3; a handful of Questions (unique ids, 2–4 choices, valid `answerIndex`, 2 Hints and 1 Explanation each); 2–3 glossary cards with Filipino text (for example with ñ). Every paragraph reference is in 1..N. Full coverage of all 12 Coverage_Slots is not needed.
     - _Requirements: 3.7, 3.8_
-  - [ ] 2.2 [frontend] Implement `splitParagraphs` and `lessonText`
+  - [ ] 2.2 [Xan] [frontend] Implement `splitParagraphs` and `lessonText`
     - `logic/paragraphs.ts`: `splitParagraphs(pages)`. Start a new paragraph at an empty line or a page change, collapse whitespace, drop empty paragraphs, split paragraphs over 800 characters at the last sentence end before 800, and number them 1..N.
     - `logic/pageRange.ts`: `lessonText(paras)` joins `"[n] text"` lines with blank lines. (`applyPageRange` comes in task 14.)
     - _Requirements: 2.2_
-  - [ ]* 2.3 [frontend] Write property test for paragraph split
+  - [ ]* 2.3 [Xan] [frontend] Write property test for paragraph split
     - File: `logic/paragraphs.test.ts`
     - **Property 4: Paragraph split keeps all text, in order, numbered 1..N**
     - **Validates: Requirements 2.2**
-  - [ ] 2.4 [frontend] Implement `assemblePack` in `logic/assemble.ts`
+  - [ ] 2.4 [Xan] [frontend] Implement `assemblePack` in `logic/assemble.ts`
     - Copy paragraph text from the phone's own `LessonParagraph[]` (drop `page`), give Questions ids `q1, q2, …` in draft order, and add `formatVersion`, `id`, `title`, `createdAt`. No validation here.
     - _Requirements: 3.7, 3.8_
-  - [ ] 2.5 [frontend] Implement `formatCheck`, `emptySlots`, `coverageCheck` in `logic/packCheck.ts`
+  - [ ] 2.5 [Xan] [frontend] Implement `formatCheck`, `emptySlots`, `coverageCheck` in `logic/packCheck.ts`
     - Implement format rules 1–7 from the design by hand (no schema library). Return a pack that has only the known fields.
     - `emptySlots` lists the (Skill, Reading_Level) pairs with no Question. `coverageCheck` passes when that list is empty.
     - Add a small required unit test in `logic/packCheck.fixture.test.ts`: `app/fixtures/sample.studypack.json` passes `formatCheck`.
     - _Requirements: 3.8, 3.9, 4.6, 4.7_
-  - [ ]* 2.6 [frontend] Add shared generators and the property test for assembled packs
+  - [ ]* 2.6 [Xan] [frontend] Add shared generators and the property test for assembled packs
     - Create `logic/testGen.ts` with `arbParagraphs`, `arbPackDraft(n)`, `arbStudyPack`, `arbDeviceInfo`, `arbAnswerSeq`. Text includes ñ, emoji, quotes, and newlines.
     - File: `logic/assemble.test.ts`
     - **Property 6: Assembled pack passes the check and uses the phone's own text**
     - **Validates: Requirements 3.7, 3.8**
-  - [ ]* 2.7 [frontend] Write property test for dangling paragraph references
+  - [ ]* 2.7 [Xan] [frontend] Write property test for dangling paragraph references
     - File: `logic/packCheck.refs.test.ts`
     - **Property 7: Dangling paragraph references are rejected**
     - **Validates: Requirements 3.8, 4.7**
-  - [ ]* 2.8 [frontend] Write property test for coverage slots
+  - [ ]* 2.8 [Xan] [frontend] Write property test for coverage slots
     - File: `logic/packCheck.coverage.test.ts`
     - **Property 10: Coverage slots and warnings**
     - **Validates: Requirements 3.9, 4.4**
 
-- [ ] 3. [backend] Pack_Service with a real model call
-  - [ ] 3.1 [backend] Check the OpenAI API parameters against the OpenAI docs
+- [ ] 3. [Xan] [backend] Pack_Service with a real model call
+  - [ ] 3.1 [Xan] [backend] Check the OpenAI API parameters against the OpenAI docs
     - Before writing the adapter, read the current OpenAI API docs and confirm: (a) that the model you will put in `MODEL_ID` exists and is available to our API key, (b) the exact parameter for JSON-only output, (c) the exact parameter for low reasoning effort, (d) the exact parameter for the output token cap, (e) the field names for input and output token counts in the `usage` part of the reply, (f) whether reasoning tokens count toward the output token cap.
     - Write the results as a short comment at the top of a new `app/service/modelAdapter.ts` (endpoint, parameter names, and doc links). Also record the chosen output cap number and the reason for it (see 3.2). Do not write the model name in the file. If something does not exist, stop and ask us.
     - _Requirements: 3.5_
-  - [ ] 3.2 [backend] Implement `generateDraft` in `service/modelAdapter.ts`
+  - [ ] 3.2 [Xan] [backend] Implement `generateDraft` in `service/modelAdapter.ts`
     - Read `MODEL_ID` and `MODEL_API_KEY` with `process.env` inside the function. If either is missing, throw a clear config error that names the missing variable (the name only, never a value). No default model name.
     - Call the OpenAI API with plain `fetch` and an `AbortController` timeout of 80 s. Use the parameter names confirmed in 3.1: JSON-only output, low reasoning effort, output cap about 8000 tokens. If 3.1 found that reasoning tokens count toward the cap, raise the cap so about 8000 visible output tokens still fit, and make sure the number and reason are in the 3.1 comment.
     - Fixed prompt: return only the `PackDraft` shape, 2 Questions per Coverage_Slot (24 total), short sentences, Reading_Level 1 = very simple words, refer to paragraphs by number only.
     - Return `{ json, inputTokens, outputTokens }` from the reply's `usage`.
     - _Requirements: 3.5, 3.7, 3.8_
-  - [ ] 3.3 [backend] Replace the stub in `api/pack.ts` with the real handler
+  - [ ] 3.3 [Xan] [backend] Replace the stub in `api/pack.ts` with the real handler
     - Non-POST → 405. Missing `lessonText`, or longer than `MAX_LESSON_CHARS` (imported from `src/config.ts`) → 400 `{ "error": "bad_request" }`.
     - Call `generateDraft`, strip code fences, `JSON.parse`. Success → 200 with the JSON. Parse failure → 502 `bad_model_output`. Adapter error or timeout → 502 `model_failed`. Missing env var → 500 `{ "error": "not_configured" }`.
     - Keep nothing. Log one line per request: status, input tokens, output tokens, seconds. Never log the lesson text, the pack, or the key.
     - _Requirements: 3.5, 3.6_
-  - [ ] 3.4 [backend] Write unit tests for the handler with a mocked adapter
+  - [ ] 3.4 [Xan] [backend] Write unit tests for the handler with a mocked adapter
     - File: `app/api/pack.test.ts`. Cases: valid JSON → 200; fenced JSON → 200; garbage → 502; adapter throws → 502; text over `MAX_LESSON_CHARS` → 400; GET → 405; missing `MODEL_ID` or `MODEL_API_KEY` → 500 `not_configured`.
     - Check that the log line has status, token counts, and seconds, and never contains the lesson text or the key.
     - Use fake values such as `test-model` in tests, never a real model name.
     - _Requirements: 3.5, 3.6_
 
-- [ ] 4. [frontend] Thin IO for the slice
-  - [ ] 4.1 [frontend] Implement `io/pdf.ts`
+- [ ] 4. [Xan] [frontend] Thin IO for the slice
+  - [ ] 4.1 [Xan] [frontend] Implement `io/pdf.ts`
     - Load pdf.js with dynamic `import()` and set up its worker. Return `RawPage[]` with lines built from text items (`hasEOL`).
     - _Requirements: 2.1_
-  - [ ] 4.2 [frontend] Implement `io/fingerprint.ts`
+  - [ ] 4.2 [Xan] [frontend] Implement `io/fingerprint.ts`
     - `fingerprint(text)` = hex SHA-256 of the UTF-8 text using `crypto.subtle.digest`.
     - _Requirements: 3.2_
-  - [ ] 4.3 [frontend] Implement `io/packClient.ts`
+  - [ ] 4.3 [Xan] [frontend] Implement `io/packClient.ts`
     - `requestDraft(lessonText)`: return `offline` without calling fetch when `navigator.onLine === false`. POST to `PACK_SERVICE_URL`, abort after `PACK_TIMEOUT_SECONDS`, and map results to `ok`, `timeout`, `server`, or `bad_json`. One request per call.
     - _Requirements: 3.4, 3.10, 3.11_
-  - [ ] 4.4 [frontend] Implement `io/store.ts` with `idb`
+  - [ ] 4.4 [Xan] [frontend] Implement `io/store.ts` with `idb`
     - Install `idb` (exact version). One database named from `APP_NAME` with stores `packs`, `mastery`, `flags`, `settings`, all created now so no upgrade is needed later.
     - Helpers: `getPack`, `putPack`, `listPacks`, `getMastery`, `putMastery`, `getFlags(packId)`, `putFlag`, `getMode`, `putMode`. (`deleteAll` comes in task 19.)
     - _Requirements: 8.1, 8.2_
 
-- [ ] 5. [frontend] Study logic for the slice: coach, session, mastery
-  - [ ] 5.1 [frontend] Implement `coach()` in `logic/coach.ts`
+- [ ] 5. [Tristan] [frontend] Study logic for the slice: coach, session, mastery
+  - [ ] 5.1 [Tristan] [frontend] Implement `coach()` in `logic/coach.ts`
     - Right → praise from a small fixed list + Explanation. Wrong after 0 earlier wrongs → Hint 1; after 1 → Hint 2; after 2 → reveal Explanation and correct answer. Every feedback carries its `paragraph`.
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_
-  - [ ]* 5.2 [frontend] Write property test for the coach ladder
+  - [ ]* 5.2 [Tristan] [frontend] Write property test for the coach ladder
     - File: `logic/coach.test.ts`
     - **Property 15: Coach feedback ladder**
     - **Validates: Requirements 6.1, 6.2, 6.3, 6.4, 6.5**
-  - [ ] 5.3 [frontend] Implement the session reducer in `logic/session.ts`
+  - [ ] 5.3 [Tristan] [frontend] Implement the session reducer in `logic/session.ts`
     - `startSession`, `available`, `pickNext` (nearest level, level 1 wins a tie with 3), `answer` (uses `coach`, updates streaks and level, finishes a question on right or third wrong), `skipFlagged`, and the `done` rule (8 finished or nothing left).
     - Add two small required unit tests: `startSession("catchup").level === 1` and `startSession("practice").level === 2`.
     - _Requirements: 5.2, 5.3, 5.5, 5.6, 5.7, 5.8, 5.9, 6.9_
-  - [ ]* 5.4 [frontend] Write property test for picking the next Question
+  - [ ]* 5.4 [Tristan] [frontend] Write property test for picking the next Question
     - File: `logic/session.pick.test.ts`
     - **Property 12: Next Question is available and at the nearest level**
     - **Validates: Requirements 5.5, 6.9**
-  - [ ]* 5.5 [frontend] Write property test for Reading_Level changes
+  - [ ]* 5.5 [Tristan] [frontend] Write property test for Reading_Level changes
     - File: `logic/session.level.test.ts`
     - **Property 13: Reading_Level adapts and stays in 1..3**
     - **Validates: Requirements 5.2, 5.3, 5.6, 5.7, 5.8**
-  - [ ]* 5.6 [frontend] Write property test for the session end
+  - [ ]* 5.6 [Tristan] [frontend] Write property test for the session end
     - File: `logic/session.end.test.ts`
     - **Property 14: Session ends at 8 or when nothing is left**
     - **Validates: Requirements 5.9**
-  - [ ] 5.7 [frontend] Implement `logic/mastery.ts`
+  - [ ] 5.7 [Tristan] [frontend] Implement `logic/mastery.ts`
     - `emptyMastery()`, `recordAnswer`, `percent` (0 when no answers, else `round(100 × right / answered)`).
     - _Requirements: 7.6, 7.7_
-  - [ ]* 5.8 [frontend] Write property test for mastery
+  - [ ]* 5.8 [Tristan] [frontend] Write property test for mastery
     - File: `logic/mastery.test.ts`
     - **Property 18: Mastery percent matches the answer history**
     - **Validates: Requirements 7.6, 7.7**
 
-- [ ] 6. [frontend] Wire the vertical slice together
-  - [ ] 6.1 [frontend] Implement the make-pack flow in `src/flow/makePack.ts`
+- [ ] 6. [Xan] [Tristan] [frontend] Wire the vertical slice together
+  - [ ] 6.1 [Xan] [frontend] Implement the make-pack flow in `src/flow/makePack.ts`
     - `makePack(file, deps)` with injected `extract`, `fingerprint`, `store`, `requestDraft`, so it can be tested without a browser. Steps: extract → `splitParagraphs` → `lessonText` → Fingerprint → if a pack with this id exists, return it (no network) → else `requestDraft` once → `assemblePack` → `formatCheck` + `coverageCheck` → save only if both pass.
     - Return `{ ok: true, pack, isNew }` or `{ ok: false, reason }`. Stand-in for now: if text is over `MAX_LESSON_CHARS`, return `too_long` (page range comes in task 14).
     - _Requirements: 2.1, 2.2, 3.2, 3.3, 3.4, 3.9, 3.10_
-  - [ ] 6.2 [frontend] Write unit tests for the make-pack flow with mocks
+  - [ ] 6.2 [Xan] [frontend] Write unit tests for the make-pack flow with mocks
     - File: `src/flow/makePack.test.ts`. Cases: Fingerprint match opens the saved pack and never calls `requestDraft`; no match calls it exactly once and saves; timeout, server error, failed format check, and failed coverage check all save nothing.
     - _Requirements: 3.3, 3.4, 3.9, 3.10_
-  - [ ] 6.3 [frontend] Add the Library and Make Pack screens
+  - [ ] 6.3 [Xan] [frontend] Add the Library and Make Pack screens
     - `App.tsx` holds one `screen` state value (no router). Stand-in: mode is hard-coded to Standard_Mode.
     - `screens/Library.tsx`: list saved packs, button "Make a pack".
     - `screens/MakePack.tsx`: plain file input, calls `makePack`, shows a simple "Something went wrong" + "Try again" on failure, opens the pack on success.
     - _Requirements: 2.1, 3.3, 3.10_
-  - [ ] 6.4 [frontend] Add the study screens
+  - [ ] 6.4 [Tristan] [frontend] Add the study screens
     - `screens/PathPick.tsx` (Catch-up or Practice), `screens/Summary.tsx` (summary at the start level with ¶ links), `screens/QuestionScreen.tsx` (choices, coach feedback, "See in lesson ¶n" link, Next), `components/ParagraphSheet.tsx` (bottom sheet with the paragraph text), `screens/Mastery.tsx` (one bar per Skill, "0% · not started yet" when empty).
     - Save mastery to the store each time a question is finished. Show Mastery when the session is done.
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.9, 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 7.6, 7.7_
