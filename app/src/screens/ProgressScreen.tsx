@@ -1,21 +1,13 @@
 import './ProgressScreen.css';
-import type { StudyPack } from '../logic/types'
+import type { Skill, StudyPack, MasteryRecord } from '../logic/types'
+import { percent } from '../logic/mastery'
 import { MasteryBar } from '../components/MasteryBar';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
-type Skill = 'main_idea' | 'detail' | 'vocabulary' | 'inference';
-
-interface MasteryRecord {
-  answered: number;
-  firstTryRight: number;
-}
-
-type MasteryData = Record<Skill, MasteryRecord>;
-
 interface ProgressScreenProps {
   pack: StudyPack;
-  mastery: MasteryData;
+  mastery: MasteryRecord;
   /** Called when "Study again" is tapped */
   onStudyAgain: () => void;
   /** Called when "Flashcards" is tapped (placeholder) */
@@ -23,11 +15,6 @@ interface ProgressScreenProps {
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
-
-function masteryPercent(r: MasteryRecord): number {
-  if (r.answered === 0) return 0;
-  return Math.round((r.firstTryRight / r.answered) * 100);
-}
 
 const SKILL_LABELS: Record<Skill, string> = {
   main_idea:  'Main idea',
@@ -73,7 +60,7 @@ export function ProgressScreen({ pack, mastery, onStudyAgain, onFlashcards }: Pr
           <MasteryBar
             key={skill}
             label={SKILL_LABELS[skill]}
-            percent={masteryPercent(mastery[skill])}
+            percent={percent(mastery[skill])}
           />
         ))}
       </div>

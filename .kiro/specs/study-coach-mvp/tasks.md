@@ -154,7 +154,7 @@ Model rule for every backend task: the model name comes only from the `MODEL_ID`
     - `screens/Library.tsx`: list saved packs, button "Make a pack".
     - `screens/MakePack.tsx`: plain file input, calls `makePack`, shows a simple "Something went wrong" + "Try again" on failure, opens the pack on success.
     - _Requirements: 2.1, 3.3, 3.10_
-  - [ ] 6.4 [Tristan] [frontend] Add the study screens
+  - [x] 6.4 [Tristan] [frontend] Add the study screens
     - `screens/PathPick.tsx` (Catch-up or Practice), `screens/Summary.tsx` (summary at the start level with ¶ links), `screens/QuestionScreen.tsx` (choices, coach feedback, "See in lesson ¶n" link, Next), `components/ParagraphSheet.tsx` (bottom sheet with the paragraph text), `screens/Mastery.tsx` (one bar per Skill, "0% · not started yet" when empty).
     - Save mastery to the store each time a question is finished. Show Mastery when the session is done.
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.9, 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 7.6, 7.7_

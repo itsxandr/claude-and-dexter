@@ -207,7 +207,7 @@ export function LessonsScreen({ packs, onStudy }: LessonsScreenProps) {
           >
             <span className="lessons-screen__pick-plus" aria-hidden="true">+</span>
             <span className="lessons-screen__pick-label">Choose a file from your phone</span>
-            <span className="lessons-screen__pick-sub">PDF or PowerPoint</span>
+            <span className="lessons-screen__pick-sub">PDF</span>
           </button>
 
           {/* ── Open a pack file ── */}

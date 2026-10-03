@@ -1,11 +1,12 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import './App.css';
 
-import { samplePack } from './mock/samplePack';
-import type { Skill, ReadingLevel, MasteryRecord } from './logic/types'
+import type { Skill, ReadingLevel, StudyPack, MasteryRecord } from './logic/types'
 import { emptyMastery, recordAnswer } from './logic/mastery'
 import type { PathKind, SessionState } from './logic/session'
 import { startSession, pickNext, answer, skipFlagged } from './logic/session'
+import { listPacks, putPack, getMastery, putMastery } from './io/store'
+import sampleStudyPack from '../fixtures/sample.studypack.json'
 import { PathPickScreen }    from './screens/PathPickScreen';
 import { SummaryScreen }     from './screens/SummaryScreen';
 import { QuestionScreen }    from './screens/QuestionScreen';
@@ -27,6 +28,10 @@ type Screen =
 
 const SESSION_LENGTH = 8;
 
+// Dev seed: the hand-written fixture, saved once on first run until the real
+// make-pack flow exists. JSON has no literal types, so we assert the shape.
+const SEED_PACK = sampleStudyPack as unknown as StudyPack
+
 // Index of a wrong choice for a question (choices always has 2–4 entries, so
 // one wrong choice always exists). Used to replay a wrong answer into the
 // session reducer when the Question finished without a first-try right.
@@ -39,9 +44,35 @@ function wrongChoice(answerIndex: number): number {
 export default function App() {
   const [screen, setScreen]       = useState<Screen>({ name: 'lessons' });
   const [activeTab, setActiveTab] = useState<Tab>('lessons');
+  const [packs, setPacks]         = useState<StudyPack[]>([]);
+  const [pack, setPack]           = useState<StudyPack | null>(null);
   const [mastery, setMastery]     = useState<MasteryRecord>(emptyMastery());
   const [flagged]                 = useState<Set<string>>(new Set());
   const [session, setSession]     = useState<SessionState>(() => startSession('catchup'));
+
+  // ── Load from the store on start ───────────────────────────────────────────
+  //
+  // Seed the fixture pack the first time (no packs yet), then read the pack
+  // list and the current pack's mastery from the store.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      let saved = await listPacks();
+      if (saved.length === 0) {
+        await putPack(SEED_PACK);
+        saved = await listPacks();
+      }
+      if (cancelled) return;
+      setPacks(saved);
+      const first = saved[0] ?? null;
+      setPack(first);
+      if (first !== null) {
+        const m = await getMastery(first.id);
+        if (!cancelled) setMastery(m ?? emptyMastery());
+      }
+    })();
+    return () => { cancelled = true };
+  }, []);
 
   // ── Tab navigation ────────────────────────────────────────────────────────
 
@@ -54,9 +85,19 @@ export default function App() {
 
   // ── Screen transitions ────────────────────────────────────────────────────
 
-  function handleStudyFromLesson() {
+  async function openPack(packId: string) {
+    const chosen = packs.find(p => p.id === packId);
+    if (chosen !== undefined) {
+      setPack(chosen);
+      const m = await getMastery(chosen.id);
+      setMastery(m ?? emptyMastery());
+    }
     setActiveTab('study');
     setScreen({ name: 'path_pick' });
+  }
+
+  function handleStudyFromLesson(packId: string) {
+    void openPack(packId);
   }
 
   function handlePathPick(path: PathKind) {
@@ -69,13 +110,14 @@ export default function App() {
   // Open the question that the reducer picks next for `s`, or go to Progress
   // when the session is done or nothing is left to pick.
   function showNext(s: SessionState, answeredCount: number) {
-    const next = s.done ? null : pickNext(samplePack, s, flagged);
+    if (pack === null) return;
+    const next = s.done ? null : pickNext(pack, s, flagged);
     if (next === null) {
       setScreen({ name: 'progress' });
       setActiveTab('progress');
       return;
     }
-    const questionIndex = samplePack.questions.findIndex(q => q.id === next.id);
+    const questionIndex = pack.questions.findIndex(q => q.id === next.id);
     setScreen({ name: 'question', questionIndex, answeredCount });
   }
 
@@ -87,13 +129,15 @@ export default function App() {
     questionId: string,
     firstTryRight: boolean,
   ) => {
-    if (screen.name !== 'question') return;
+    if (screen.name !== 'question' || pack === null) return;
     const { answeredCount } = screen;
 
-    const question = samplePack.questions.find(q => q.id === questionId)!;
+    const question = pack.questions.find(q => q.id === questionId)!;
 
-    // Record mastery for this question's Skill.
-    setMastery(m => recordAnswer(m, question.skill as Skill, firstTryRight));
+    // Record mastery for this question's Skill and save it for this pack.
+    const nextMastery = recordAnswer(mastery, question.skill as Skill, firstTryRight);
+    setMastery(nextMastery);
+    void putMastery(pack.id, nextMastery);
 
     // Drive the session reducer to the finished state. A first-try right is one
     // right answer; any other finish is a first-try wrong, replayed until the
@@ -111,18 +155,18 @@ export default function App() {
 
     setSession(next);
     showNext(next, answeredCount + 1);
-  }, [screen, session, flagged]);
+  }, [screen, session, pack, mastery, flagged]);
 
   const handleReport = useCallback((_questionId: string) => {
     // Reported questions don't count toward SESSION_LENGTH or change streaks.
     // TODO: persist the flag with store.ts (task 16).
-    if (screen.name !== 'question') return;
+    if (screen.name !== 'question' || pack === null) return;
     const { answeredCount } = screen;
 
-    const next = skipFlagged(session, samplePack, flagged);
+    const next = skipFlagged(session, pack, flagged);
     setSession(next);
     showNext(next, answeredCount); // not incremented — reported doesn't count
-  }, [screen, session, flagged]);
+  }, [screen, session, pack, flagged]);
 
   function handleClose() {
     setScreen({ name: 'path_pick' });
@@ -137,18 +181,25 @@ export default function App() {
   // ── Render ────────────────────────────────────────────────────────────────
 
   function renderScreen() {
+    // The Lessons list works with whatever packs are saved; it does not need a
+    // single "current" pack.
+    if (screen.name === 'lessons') {
+      return <LessonsScreen packs={packs} onStudy={handleStudyFromLesson} />;
+    }
+
+    // Every other screen studies the current pack. Nothing to show until it
+    // loads from the store.
+    if (pack === null) return null;
+
     switch (screen.name) {
 
-      case 'lessons':
-        return <LessonsScreen packs={[samplePack]} onStudy={handleStudyFromLesson} />;
-
       case 'path_pick':
-        return <PathPickScreen pack={samplePack} onPick={handlePathPick} />;
+        return <PathPickScreen pack={pack} onPick={handlePathPick} />;
 
       case 'summary':
         return (
           <SummaryScreen
-            pack={samplePack}
+            pack={pack}
             level={screen.level}
             onStart={handleSummaryStart}
             onClose={handleClose}
@@ -160,7 +211,7 @@ export default function App() {
           // key= forces full remount on each new question — resets all local state
           <QuestionScreen
             key={screen.questionIndex}
-            pack={samplePack}
+            pack={pack}
             questionIndex={screen.questionIndex}
             sessionLength={SESSION_LENGTH}
             answeredCount={screen.answeredCount}
@@ -174,7 +225,7 @@ export default function App() {
       case 'progress':
         return (
           <ProgressScreen
-            pack={samplePack}
+            pack={pack}
             mastery={mastery}
             onStudyAgain={handleStudyAgain}
             onFlashcards={() => setScreen({ name: 'flashcards' })}
@@ -184,7 +235,7 @@ export default function App() {
       case 'flashcards':
         return (
           <FlashcardsScreen
-            pack={samplePack}
+            pack={pack}
             onBack={() => setScreen({ name: 'progress' })}
           />
         );
