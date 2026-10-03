@@ -9,7 +9,7 @@ import type { Tab, Screen } from './logic/place'
 import { checkPlace } from './logic/place'
 import {
   listPacks, putPack, getMastery, putMastery,
-  getPlace, putPlace,
+  getOnboarded, putOnboarded, getPlace, putPlace,
 } from './io/store'
 import { packFromJson } from './logic/packJson'
 import sampleStudyPack from '../fixtures/sample.studypack.json'
@@ -20,6 +20,7 @@ import { ProgressScreen }    from './screens/ProgressScreen';
 import { Library }           from './screens/Library';
 import { MakePack }          from './screens/MakePack';
 import { FlashcardsScreen }  from './screens/FlashcardsScreen';
+import { OnboardingScreen }  from './screens/OnboardingScreen';
 
 const SESSION_LENGTH = 8;
 
@@ -46,12 +47,13 @@ export default function App() {
   const [session, setSession]     = useState<SessionState>(() => startSession('catchup'));
   // False until the store has loaded; nothing shows (or saves) before then.
   const [ready, setReady]         = useState(false);
+  const [onboarded, setOnboarded] = useState(false);
 
   // ── Load from the store on start ───────────────────────────────────────────
   //
   // Seed the fixture pack the first time (no packs yet), then read the pack
-  // list and the saved Place. If the Place still fits, reopen on it;
-  // otherwise start on Lessons with the first pack.
+  // list, whether onboarding is done, and the saved Place. If the Place still
+  // fits, reopen on it; otherwise start on Lessons with the first pack.
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -60,6 +62,7 @@ export default function App() {
         await putPack(SEED_PACK);
         saved = await listPacks();
       }
+      const doneOnboarding = await getOnboarded();
       const place = checkPlace(await getPlace(), saved);
       const current = saved.find(p => p.id === place?.packId) ?? saved[0] ?? null;
       const m = current !== null ? await getMastery(current.id) : undefined;
@@ -68,6 +71,7 @@ export default function App() {
       setPacks(saved);
       setPack(current);
       setMastery(m ?? emptyMastery());
+      setOnboarded(doneOnboarding);
       if (place !== null) {
         setScreen(place.screen);
         setActiveTab(place.tab);
@@ -85,6 +89,11 @@ export default function App() {
     if (!ready) return;
     void putPlace({ screen, tab: activeTab, packId: pack?.id ?? null, session });
   }, [ready, screen, activeTab, pack, session]);
+
+  function handleOnboardingDone() {
+    setOnboarded(true);
+    void putOnboarded();
+  }
 
   // ── Tab navigation ────────────────────────────────────────────────────────
 
@@ -223,6 +232,11 @@ export default function App() {
   // ── Render ────────────────────────────────────────────────────────────────
 
   function renderScreen() {
+    // The first time the app opens, onboarding comes before everything else.
+    if (!onboarded) {
+      return <OnboardingScreen onDone={handleOnboardingDone} />;
+    }
+
     // The Library and Make Pack screens work with the saved packs; they do not
     // need a single "current" pack.
     if (screen.name === 'lessons') {
@@ -306,7 +320,8 @@ export default function App() {
   // before jumping to the saved Place.
   if (!ready) return null;
 
-  const hideTabs = screen.name === 'question' || screen.name === 'summary'
+  const hideTabs = !onboarded
+                || screen.name === 'question' || screen.name === 'summary'
                 || screen.name === 'flashcards' || screen.name === 'make_pack';
 
   return (

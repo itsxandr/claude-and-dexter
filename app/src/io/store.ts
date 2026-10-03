@@ -12,12 +12,12 @@ import type { StudyPack, MasteryRecord, Mode } from '../logic/types'
 import type { Place } from '../logic/place'
 
 // The four object stores, their keys, and the shape of each stored value.
-// Settings keys: 'mode' (Mode), 'place' (Place).
+// Settings keys: 'mode' (Mode), 'onboarded' (true), 'place' (Place).
 interface StoreSchema extends DBSchema {
   packs:    { key: string; value: StudyPack }
   mastery:  { key: string; value: MasteryRecord }
   flags:    { key: string; value: true }
-  settings: { key: string; value: Mode | Place }
+  settings: { key: string; value: Mode | true | Place }
 }
 
 // One database, created with all four stores at version 1, so no later
@@ -86,6 +86,15 @@ export async function getMode(): Promise<Mode | undefined> {
 
 export async function putMode(mode: Mode): Promise<void> {
   await (await db()).put('settings', mode, 'mode')
+}
+
+// Onboarding shows until the student finishes it once.
+export async function getOnboarded(): Promise<boolean> {
+  return (await (await db()).get('settings', 'onboarded')) === true
+}
+
+export async function putOnboarded(): Promise<void> {
+  await (await db()).put('settings', true, 'onboarded')
 }
 
 // The Place: the screen and Study_Session to reopen on.
