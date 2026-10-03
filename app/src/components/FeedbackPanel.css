@@ -1,0 +1,71 @@
+.feedback-panel {
+  flex-shrink: 0;
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ── Colour variants ─────────────────────────────────────────── */
+.feedback-panel--praise {
+  background: var(--color-green-light);
+}
+
+.feedback-panel--hint,
+.feedback-panel--reveal {
+  background: var(--color-amber);
+  padding-bottom: 8px; /* tighter bottom so link sits flush */
+}
+
+/* ── Headings ────────────────────────────────────────────────── */
+.feedback-panel__heading--correct {
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--color-green-dark);
+}
+
+.feedback-panel__heading--reveal {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-amber-dark);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.feedback-panel__hint-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-amber-dark);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* ── Body text ───────────────────────────────────────────────── */
+.feedback-panel__text {
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--color-ink-mid);
+  text-wrap: pretty;
+}
+
+/* ── "See in lesson" link-button ─────────────────────────────── */
+.feedback-panel__see-link {
+  align-self: flex-start;
+  min-height: var(--tap-min);
+  display: inline-flex;
+  align-items: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-green);
+  background: transparent;
+  border: none;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.feedback-panel__see-link:hover,
+.feedback-panel__see-link:active {
+  color: var(--color-green-dark);
+}

@@ -1,0 +1,39 @@
+.mastery-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mastery-bar__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.mastery-bar__label {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.mastery-bar__pct {
+  font-size: 15px;
+  color: var(--color-ink-muted);
+  white-space: nowrap;
+  flex: none;
+}
+
+.mastery-bar__track {
+  height: 12px;
+  background: var(--color-bg-subtle);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.mastery-bar__fill {
+  height: 100%;
+  background: var(--color-green);
+  border-radius: 6px;
+  transition: width 0.4s ease;
+}

@@ -1,0 +1,30 @@
+.read-aloud-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: var(--tap-min);
+  min-height: var(--tap-min);
+  padding: 0 12px;
+  border: 1px solid var(--color-surface);
+  background: var(--color-bg-card);
+  border-radius: 12px;
+  color: var(--color-green);
+  font-size: 14px;
+  font-weight: 700;
+  transition: background 0.15s;
+  flex: none;
+}
+
+.read-aloud-btn:hover,
+.read-aloud-btn:active {
+  background: var(--color-green-mid);
+}
+
+.read-aloud-btn--active {
+  background: var(--color-green-light);
+  border-color: var(--color-green);
+}
+
+.read-aloud-btn__icon {
+  flex: none;
+}

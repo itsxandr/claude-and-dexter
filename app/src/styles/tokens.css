@@ -1,0 +1,71 @@
+/* ─── Atkinson Hyperlegible ──────────────────────────────────────────── */
+@font-face {
+  font-family: 'Atkinson Hyperlegible';
+  src: url('/fonts/atkinson-hyperlegible-latin-400-normal.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Atkinson Hyperlegible';
+  src: url('/fonts/atkinson-hyperlegible-latin-700-normal.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ─── Design tokens ──────────────────────────────────────────────────── */
+:root {
+  /* Colour palette (from design-ref) */
+  --color-bg:           #F7F6F2;  /* main screen background */
+  --color-bg-card:      #ffffff;
+  --color-bg-subtle:    #EEECE6;
+  --color-bg-tint:      #F1EFE9;
+  --color-surface:      #E4E2DB;  /* borders / dividers */
+
+  --color-green:        #1E6B57;  /* primary action */
+  --color-green-dark:   #164F41;  /* active / pressed */
+  --color-green-light:  #E3F0EB;  /* correct feedback bg */
+  --color-green-mid:    #F0F7F4;  /* hover / pressed bg */
+
+  --color-amber:        #FCEFD6;  /* hint / wrong feedback bg */
+  --color-amber-dark:   #5C3D0A;  /* hint label text */
+
+  --color-ink:          #1D2320;  /* primary text */
+  --color-ink-mid:      #2C3B35;  /* secondary body text */
+  --color-ink-muted:    #5A625E;  /* captions, meta */
+
+  /* Typography */
+  --font-base: 'Atkinson Hyperlegible', system-ui, sans-serif;
+
+  /* Radii */
+  --radius-sm:   10px;
+  --radius-md:   14px;
+  --radius-lg:   16px;
+  --radius-pill: 999px;
+
+  /* Spacing scale (multiples of 4) */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+
+  /* Tap-target minimum */
+  --tap-min:  48px;
+
+  /* Bottom tab height */
+  --tab-h:    68px;
+}
+
+/* ─── Lite mode: kill all animations & transitions ───────────────────── */
+[data-mode="lite"] *,
+[data-mode="lite"] *::before,
+[data-mode="lite"] *::after {
+  animation-duration: 0s !important;
+  animation-delay: 0s !important;
+  transition-duration: 0s !important;
+  transition-delay: 0s !important;
+}

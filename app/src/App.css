@@ -1,0 +1,56 @@
+/* ── App shell ───────────────────────────────────────────────── */
+
+/* Scrollable content area above tabs */
+.app-content {
+  flex: 1;
+  min-height: 0;          /* allow flex child to shrink */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--color-bg);
+}
+
+/* ── Bottom tab bar ──────────────────────────────────────────── */
+.bottom-tabs {
+  flex: none;
+  height: var(--tab-h);
+  border-top: 1px solid var(--color-surface);
+  background: var(--color-bg-card);
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.bottom-tabs__tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: var(--color-ink-muted);
+  min-height: var(--tap-min);
+  border-radius: 0;
+  transition: color 0.15s;
+}
+
+.bottom-tabs__tab--active {
+  color: var(--color-green);
+}
+
+.bottom-tabs__tab:hover {
+  color: var(--color-ink);
+}
+
+/* Active underline pip */
+.bottom-tabs__indicator {
+  width: 28px;
+  height: 4px;
+  border-radius: 2px;
+  background: transparent;
+  transition: background 0.15s;
+}
+
+.bottom-tabs__tab--active .bottom-tabs__indicator {
+  background: var(--color-green);
+}

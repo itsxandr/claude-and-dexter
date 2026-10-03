@@ -1,0 +1,99 @@
+.path-pick {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 20px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── Header ──────────────────────────────────────────────────── */
+.path-pick__header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.path-pick__title {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--color-ink);
+}
+
+.path-pick__subtitle {
+  font-size: 14px;
+  color: var(--color-ink-muted);
+}
+
+/* ── Prompt ──────────────────────────────────────────────────── */
+.path-pick__prompt {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-ink);
+  margin-top: 8px;
+}
+
+/* ── Path cards ──────────────────────────────────────────────── */
+.path-pick__card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 20px 18px;
+  min-height: var(--tap-min);
+  border-radius: var(--radius-lg);
+  border: 2px solid var(--color-surface);
+  background: var(--color-bg-card);
+  text-align: left;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.path-pick__card:hover,
+.path-pick__card:active {
+  background: var(--color-green-mid);
+  border-color: var(--color-green);
+}
+
+.path-pick__card--catchup {
+  border-color: var(--color-green);
+  background: var(--color-green-light);
+}
+
+.path-pick__card--catchup:hover,
+.path-pick__card--catchup:active {
+  background: #d2e9df;
+}
+
+/* ── Card internals ──────────────────────────────────────────── */
+.path-pick__card-badge {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-green-dark);
+  background: rgba(30, 107, 87, 0.12);
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.path-pick__card-heading {
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--color-ink);
+  line-height: 1.3;
+}
+
+.path-pick__card-desc {
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--color-ink-mid);
+  text-wrap: pretty;
+}
+
+.path-pick__card-level {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-ink-muted);
+  margin-top: 4px;
+}
