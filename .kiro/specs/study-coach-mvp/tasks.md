@@ -37,7 +37,7 @@ Model rule for every backend task: the model name comes only from the `MODEL_ID`
     - _Requirements: 3.5, 3.6_
 
 - [ ] 2. [Xan] [frontend] Pure logic for the slice: paragraphs, assemble, checks
-  - [ ] 2.1 [Xan] [frontend] Add `src/config.ts`, `src/logic/types.ts`, and a sample pack fixture
+  - [x] 2.1 [Xan] [frontend] Add `src/config.ts`, `src/logic/types.ts`, and a sample pack fixture
     - `config.ts` holds `APP_NAME`, `PACK_EXTENSION`, `MAX_LESSON_CHARS`, `PACK_TIMEOUT_SECONDS`, `PACK_FORMAT_VERSION`, `SIZE_LIMIT_BYTES`, `SESSION_LENGTH`, `PACK_SERVICE_URL`, as in the design. No browser-only code, so `api/pack.ts` can import it.
     - `types.ts` holds `Skill`, `ReadingLevel`, `RawPage`, `LessonParagraph`, `Ref`, `PackDraft`, `StudyPack`, `Question`, `MasteryRecord`, `Mode`, `Slot`.
     - `app/fixtures/sample.studypack.json`: a small hand-written `StudyPack` that follows the design's format rules. A fixture is a fixed sample file we use in tests. It has `formatVersion: 1`, a non-empty `id`, `title`, and ISO `createdAt`; 3–5 paragraphs numbered 1..N; 3 summaries for levels 1, 2, 3; a handful of Questions (unique ids, 2–4 choices, valid `answerIndex`, 2 Hints and 1 Explanation each); 2–3 glossary cards with Filipino text (for example with ñ). Every paragraph reference is in 1..N. Full coverage of all 12 Coverage_Slots is not needed.

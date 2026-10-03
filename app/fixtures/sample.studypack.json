@@ -1,0 +1,90 @@
+{
+  "formatVersion": 1,
+  "id": "sample-water-cycle-0001",
+  "title": "The Water Cycle",
+  "createdAt": "2025-01-15T08:00:00.000Z",
+  "paragraphs": [
+    { "n": 1, "text": "The water cycle is the path water takes as it moves around the Earth. Water is always moving between the land, the sea, and the sky." },
+    { "n": 2, "text": "Evaporation happens when the sun heats water in seas, rivers, and lakes. The water turns into water vapor, a gas, and rises into the air." },
+    { "n": 3, "text": "Condensation happens when water vapor cools high in the sky. The vapor turns back into tiny drops of water that form clouds." },
+    { "n": 4, "text": "Precipitation is water that falls from clouds as rain, snow, or hail. In the Philippines, most precipitation falls as rain during the rainy season. During El Niño, much less rain falls." },
+    { "n": 5, "text": "After rain falls, some water flows into rivers and back to the sea. Some soaks into the ground. Then the cycle starts again." }
+  ],
+  "summaries": [
+    { "level": 1, "text": "Water moves in a circle. The sun makes water go up. It makes clouds. Rain falls down. Then it starts again.", "paragraphs": [1, 2, 3, 4, 5] },
+    { "level": 2, "text": "In the water cycle, the sun heats water so it rises as vapor. The vapor cools and forms clouds. Water falls back as rain and flows to the sea.", "paragraphs": [2, 3, 4, 5] },
+    { "level": 3, "text": "The water cycle has three main steps: evaporation, condensation, and precipitation. Water then collects in rivers, seas, and the ground before the cycle repeats.", "paragraphs": [1, 2, 3, 4, 5] }
+  ],
+  "questions": [
+    {
+      "id": "q1",
+      "skill": "main_idea",
+      "level": 1,
+      "prompt": "What is this lesson mostly about?",
+      "choices": ["How water moves around the Earth", "How to cook rice", "How plants grow"],
+      "answerIndex": 0,
+      "hints": [
+        { "text": "Look at the first sentence of the lesson.", "paragraph": 1 },
+        { "text": "The lesson talks about the land, the sea, and the sky.", "paragraph": 1 }
+      ],
+      "explanation": { "text": "The lesson is about the water cycle, the path water takes around the Earth.", "paragraph": 1 }
+    },
+    {
+      "id": "q2",
+      "skill": "detail",
+      "level": 1,
+      "prompt": "What heats the water so it goes up?",
+      "choices": ["The moon", "The sun", "The wind"],
+      "answerIndex": 1,
+      "hints": [
+        { "text": "Read the part about evaporation.", "paragraph": 2 },
+        { "text": "It is hot and in the sky during the day.", "paragraph": 2 }
+      ],
+      "explanation": { "text": "The sun heats the water, and it rises as water vapor.", "paragraph": 2 }
+    },
+    {
+      "id": "q3",
+      "skill": "vocabulary",
+      "level": 2,
+      "prompt": "In the lesson, what does \"condensation\" mean?",
+      "choices": ["Water falling as rain", "Water vapor cooling into tiny drops", "Water soaking into the ground", "Water getting hot"],
+      "answerIndex": 1,
+      "hints": [
+        { "text": "Find the sentence that starts with \"Condensation happens when\".", "paragraph": 3 },
+        { "text": "This step makes clouds.", "paragraph": 3 }
+      ],
+      "explanation": { "text": "Condensation is when water vapor cools and turns into tiny drops that form clouds.", "paragraph": 3 }
+    },
+    {
+      "id": "q4",
+      "skill": "inference",
+      "level": 2,
+      "prompt": "Why do rivers in the Philippines get fuller in the rainy season?",
+      "choices": ["More rain falls and flows into them", "The sun is hotter"],
+      "answerIndex": 0,
+      "hints": [
+        { "text": "Think about what falls during the rainy season.", "paragraph": 4 },
+        { "text": "Read where rain water goes after it falls.", "paragraph": 5 }
+      ],
+      "explanation": { "text": "More rain falls in the rainy season, and rain water flows into rivers.", "paragraph": 5 }
+    },
+    {
+      "id": "q5",
+      "skill": "detail",
+      "level": 3,
+      "prompt": "Which of these is NOT named as a kind of precipitation?",
+      "choices": ["Rain", "Snow", "Hail", "Fog"],
+      "answerIndex": 3,
+      "hints": [
+        { "text": "The lesson lists three kinds of precipitation.", "paragraph": 4 },
+        { "text": "Check each choice against the list: rain, snow, or hail.", "paragraph": 4 }
+      ],
+      "explanation": { "text": "Fog is not in the list. Precipitation falls as rain, snow, or hail.", "paragraph": 4 }
+    }
+  ],
+  "glossary": [
+    { "en": "evaporation", "fil": "pagsingaw", "meaning": "When water gets hot and turns into a gas that goes up into the air." },
+    { "en": "cloud", "fil": "ulap", "meaning": "Many tiny drops of water together high in the sky." },
+    { "en": "El Niño", "fil": "El Niño (tagtuyot)", "meaning": "A time when much less rain falls and the land gets very dry." }
+  ]
+}
