@@ -1,0 +1,146 @@
+import { useRef, useState } from 'react'
+import './LessonsScreen.css'
+import { makePack } from '../flow/makePack'
+import { extractPdf } from '../io/pdf'
+import { fingerprint } from '../io/fingerprint'
+import { getPack, putPack } from '../io/store'
+import { requestDraft } from '../io/packClient'
+
+// ── Types ──────────────────────────────────────────────────────────────────
+
+type Phase = 'idle' | 'loading' | 'error'
+
+interface MakePackProps {
+  // Called with the new (or already-saved) pack id when a pack is ready.
+  onDone: (packId: string) => void
+  // Go back to the Library.
+  onCancel: () => void
+}
+
+// The real make-pack flow wired to the browser IO: read the PDF, hash the
+// text, check the store, ask the Pack_Service once. See src/flow/makePack.ts.
+const deps = {
+  extract: extractPdf,
+  fingerprint,
+  store: { getPack, putPack },
+  requestDraft,
+}
+
+/**
+ * MakePack (design.md, Req 2.1, 3.3, 3.10): pick a PDF, run the make-pack flow,
+ * and open the pack. On any failure it shows one plain message with "Try again";
+ * friendly per-reason messages come later (task 12).
+ */
+export function MakePack({ onDone, onCancel }: MakePackProps) {
+  const [phase, setPhase] = useState<Phase>('idle')
+  const [loadingName, setLoadingName] = useState('')
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  async function run(file: File) {
+    setLoadingName(file.name)
+    setPhase('loading')
+    try {
+      const result = await makePack(file, deps)
+      if (result.ok) {
+        onDone(result.pack.id)
+        return
+      }
+      setPhase('error')
+    } catch {
+      // pdf.js or any step can throw on a broken file.
+      setPhase('error')
+    }
+  }
+
+  function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = '' // let the same file be picked again
+    void run(file)
+  }
+
+  function openPicker() {
+    setPhase('idle')
+    fileInputRef.current?.click()
+  }
+
+  return (
+    <main className="lessons-screen">
+      {/* Hidden PDF-only file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf,application/pdf"
+        className="lessons-screen__file-input"
+        aria-hidden="true"
+        tabIndex={-1}
+        onChange={onFileChange}
+      />
+
+      {/* ── AppName header ── */}
+      <header className="lessons-screen__appbar">
+        <div className="lessons-screen__brand">
+          <span className="lessons-screen__diamond" aria-hidden="true" />
+          <span className="lessons-screen__appname">AppName</span>
+        </div>
+        <span className="lessons-screen__offline-chip">
+          <span className="lessons-screen__offline-dot" aria-hidden="true" />
+          Offline ready
+        </span>
+      </header>
+
+      <h1 className="lessons-screen__heading">Make a pack</h1>
+
+      {/* ── Info card ── */}
+      <div className="lessons-screen__info-card">
+        <p className="lessons-screen__info-title">
+          Needs internet once to make the pack.
+        </p>
+        <p className="lessons-screen__info-body">
+          After that, study with no internet.
+        </p>
+      </div>
+
+      {phase === 'loading' ? (
+        <div className="lessons-screen__loading">
+          <span className="lessons-screen__spinner" aria-hidden="true" />
+          <span className="lessons-screen__loading-name">Making a pack from {loadingName}</span>
+          <span className="lessons-screen__loading-note">
+            Keep internet on until this finishes
+          </span>
+        </div>
+      ) : phase === 'error' ? (
+        <>
+          <div className="lessons-screen__error" role="alert">
+            Something went wrong.
+          </div>
+          <button className="lessons-screen__pick-btn" onClick={openPicker}>
+            <span className="lessons-screen__pick-plus" aria-hidden="true">↻</span>
+            <span className="lessons-screen__pick-label">Try again</span>
+            <span className="lessons-screen__pick-sub">PDF</span>
+          </button>
+          <button className="lessons-screen__open-btn" onClick={onCancel}>
+            Back to library
+          </button>
+        </>
+      ) : (
+        <>
+          {/* ── Dashed file picker ── */}
+          <button
+            className="lessons-screen__pick-btn"
+            onClick={openPicker}
+            aria-label="Choose a PDF file from your phone"
+          >
+            <span className="lessons-screen__pick-plus" aria-hidden="true">+</span>
+            <span className="lessons-screen__pick-label">Choose a file from your phone</span>
+            <span className="lessons-screen__pick-sub">PDF</span>
+          </button>
+
+          <button className="lessons-screen__open-btn" onClick={onCancel}>
+            Back to library
+          </button>
+        </>
+      )}
+    </main>
+  )
+}

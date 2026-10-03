@@ -149,7 +149,7 @@ Model rule for every backend task: the model name comes only from the `MODEL_ID`
   - [ ] 6.2 [Xan] [frontend] Write unit tests for the make-pack flow with mocks
     - File: `src/flow/makePack.test.ts`. Cases: Fingerprint match opens the saved pack and never calls `requestDraft`; no match calls it exactly once and saves; timeout, server error, failed format check, and failed coverage check all save nothing.
     - _Requirements: 3.3, 3.4, 3.9, 3.10_
-  - [ ] 6.3 [Tristan] [frontend] Add the Library and Make Pack screens
+  - [x] 6.3 [Tristan] [frontend] Add the Library and Make Pack screens
     - `App.tsx` holds one `screen` state value (no router). Stand-in: mode is hard-coded to Standard_Mode.
     - `screens/Library.tsx`: list saved packs, button "Make a pack".
     - `screens/MakePack.tsx`: plain file input, calls `makePack`, shows a simple "Something went wrong" + "Try again" on failure, opens the pack on success.

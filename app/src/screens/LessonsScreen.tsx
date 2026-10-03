@@ -14,6 +14,12 @@ type Phase = 'idle' | 'loading' | 'error';
 interface LessonsScreenProps {
   packs: StudyPack[];
   onStudy: (packId: string) => void;
+  /**
+   * When set, the "Choose a file" button hands off to this instead of opening
+   * the built-in picker. The Library screen uses it to route to MakePack, which
+   * runs the real make-pack flow. Left unset, the stand-in picker is used.
+   */
+  onMakePack?: () => void;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -49,7 +55,7 @@ function mbStr(bytes: number) {
  *  - JSON.parse + basic id check. Bad file → "This file is not a valid pack."
  *  - TODO: replace with Xan's packFromJson + formatCheck.
  */
-export function LessonsScreen({ packs, onStudy }: LessonsScreenProps) {
+export function LessonsScreen({ packs, onStudy, onMakePack }: LessonsScreenProps) {
   const [phase, setPhase]   = useState<Phase>('idle');
   const [errorMsg, setErrorMsg] = useState('');
   const [loadingName, setLoadingName] = useState('');
@@ -202,8 +208,8 @@ export function LessonsScreen({ packs, onStudy }: LessonsScreenProps) {
           {/* ── Dashed file picker ── */}
           <button
             className="lessons-screen__pick-btn"
-            onClick={() => lessonInputRef.current?.click()}
-            aria-label="Choose a PDF or PPTX file from your phone"
+            onClick={() => onMakePack ? onMakePack() : lessonInputRef.current?.click()}
+            aria-label="Choose a PDF file from your phone"
           >
             <span className="lessons-screen__pick-plus" aria-hidden="true">+</span>
             <span className="lessons-screen__pick-label">Choose a file from your phone</span>

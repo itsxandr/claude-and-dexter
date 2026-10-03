@@ -11,7 +11,8 @@ import { PathPickScreen }    from './screens/PathPickScreen';
 import { SummaryScreen }     from './screens/SummaryScreen';
 import { QuestionScreen }    from './screens/QuestionScreen';
 import { ProgressScreen }    from './screens/ProgressScreen';
-import { LessonsScreen }     from './screens/LessonsScreen';
+import { Library }           from './screens/Library';
+import { MakePack }          from './screens/MakePack';
 import { FlashcardsScreen }  from './screens/FlashcardsScreen';
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -20,6 +21,7 @@ type Tab          = 'lessons' | 'study' | 'progress';
 
 type Screen =
   | { name: 'lessons' }
+  | { name: 'make_pack' }
   | { name: 'path_pick' }
   | { name: 'summary';    path: PathKind; level: ReadingLevel }
   | { name: 'question';   questionIndex: number; answeredCount: number }
@@ -98,6 +100,25 @@ export default function App() {
 
   function handleStudyFromLesson(packId: string) {
     void openPack(packId);
+  }
+
+  function handleMakePack() {
+    setScreen({ name: 'make_pack' });
+  }
+
+  // A pack was just made (or matched an existing one): refresh the list from
+  // the store, then open it to study.
+  async function handlePackMade(packId: string) {
+    const saved = await listPacks();
+    setPacks(saved);
+    const chosen = saved.find(p => p.id === packId);
+    if (chosen !== undefined) {
+      setPack(chosen);
+      const m = await getMastery(chosen.id);
+      setMastery(m ?? emptyMastery());
+    }
+    setActiveTab('study');
+    setScreen({ name: 'path_pick' });
   }
 
   function handlePathPick(path: PathKind) {
@@ -181,10 +202,25 @@ export default function App() {
   // ── Render ────────────────────────────────────────────────────────────────
 
   function renderScreen() {
-    // The Lessons list works with whatever packs are saved; it does not need a
-    // single "current" pack.
+    // The Library and Make Pack screens work with the saved packs; they do not
+    // need a single "current" pack.
     if (screen.name === 'lessons') {
-      return <LessonsScreen packs={packs} onStudy={handleStudyFromLesson} />;
+      return (
+        <Library
+          packs={packs}
+          onStudy={handleStudyFromLesson}
+          onMakePack={handleMakePack}
+        />
+      );
+    }
+
+    if (screen.name === 'make_pack') {
+      return (
+        <MakePack
+          onDone={(packId) => void handlePackMade(packId)}
+          onCancel={() => setScreen({ name: 'lessons' })}
+        />
+      );
     }
 
     // Every other screen studies the current pack. Nothing to show until it
@@ -243,7 +279,7 @@ export default function App() {
   }
 
   const hideTabs = screen.name === 'question' || screen.name === 'summary'
-                || screen.name === 'flashcards';
+                || screen.name === 'flashcards' || screen.name === 'make_pack';
 
   return (
     <>
