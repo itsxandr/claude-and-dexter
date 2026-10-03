@@ -19,7 +19,7 @@ Model rule for every backend task: the model name comes only from the `MODEL_ID`
 ## Tasks
 
 - [ ] 1. [frontend] [backend] Scaffold the project (setup only, no logic)
-  - [ ] 1.1 [frontend] Create the Vite + React + TypeScript PWA in `app/`
+  - [x] 1.1 [frontend] Create the Vite + React + TypeScript PWA in `app/`
     - Run the Vite React-TS template in `app/`. Add `vite-plugin-pwa` with the default Workbox precache and `navigateFallbackDenylist: [/^\/api\//]`, so `/api/*` always goes to the network.
     - Add a short web app manifest (name `[APP NAME]`, one icon). `App.tsx` shows one placeholder line only.
     - Add Vitest and fast-check as dev dependencies with exact pinned versions. Add the scripts `"test": "vitest --run"` and `"build"`.
