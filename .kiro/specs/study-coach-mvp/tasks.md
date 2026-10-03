@@ -25,7 +25,7 @@ Model rule for every backend task: the model name comes only from the `MODEL_ID`
     - Add Vitest and fast-check as dev dependencies with exact pinned versions. Add the scripts `"test": "vitest --run"` and `"build"`.
     - Check: `npm run build` and `npm test` (no tests yet) both finish without errors.
     - _Requirements: 8.1, 8.3_
-  - [ ] 1.2 [Xan] [backend] Add the Vercel function stub, vercel.json, env example, and deploy the stub
+  - [x] 1.2 [Xan] [backend] Add the Vercel function stub, vercel.json, env example, and deploy the stub
     - `app/api/pack.ts`: a Node.js handler that returns a fixed reply, for example `{ "ok": true, "stub": true }` with status 200.
     - `app/vercel.json`: `{ "functions": { "api/pack.ts": { "maxDuration": 90 } } }`.
     - `app/.env.example`: the lines `MODEL_ID=` and `MODEL_API_KEY=` with empty values.

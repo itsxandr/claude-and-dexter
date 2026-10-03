@@ -1,0 +1,1 @@
+{ "functions": { "api/pack.ts": { "maxDuration": 90 } } }
