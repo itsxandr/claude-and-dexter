@@ -73,7 +73,7 @@ Model rule for every backend task: the model name comes only from the `MODEL_ID`
     - **Validates: Requirements 3.9, 4.4**
 
 - [ ] 3. [Xan] [backend] Pack_Service with a real model call
-  - [ ] 3.1 [Xan] [backend] Check the OpenAI API parameters against the OpenAI docs
+  - [x] 3.1 [Xan] [backend] Check the OpenAI API parameters against the OpenAI docs
     - Before writing the adapter, read the current OpenAI API docs and confirm: (a) that the model you will put in `MODEL_ID` exists and is available to our API key, (b) the exact parameter for JSON-only output, (c) the exact parameter for low reasoning effort, (d) the exact parameter for the output token cap, (e) the field names for input and output token counts in the `usage` part of the reply, (f) whether reasoning tokens count toward the output token cap.
     - Write the results as a short comment at the top of a new `app/service/modelAdapter.ts` (endpoint, parameter names, and doc links). Also record the chosen output cap number and the reason for it (see 3.2). Do not write the model name in the file. If something does not exist, stop and ask us.
     - _Requirements: 3.5_
