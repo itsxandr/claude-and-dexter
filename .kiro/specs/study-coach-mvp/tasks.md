@@ -98,7 +98,7 @@ Model rule for every backend task: the model name comes only from the `MODEL_ID`
   - [ ] 4.1 [Tristan] [frontend] Implement `io/pdf.ts`
     - Load pdf.js with dynamic `import()` and set up its worker. Return `RawPage[]` with lines built from text items (`hasEOL`).
     - _Requirements: 2.1_
-  - [ ] 4.2 [Xan] [frontend] Implement `io/fingerprint.ts`
+  - [x] 4.2 [Xan] [frontend] Implement `io/fingerprint.ts`
     - `fingerprint(text)` = hex SHA-256 of the UTF-8 text using `crypto.subtle.digest`.
     - _Requirements: 3.2_
   - [ ] 4.3 [Xan] [frontend] Implement `io/packClient.ts`
