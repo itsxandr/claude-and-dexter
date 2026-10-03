@@ -95,7 +95,7 @@ Model rule for every backend task: the model name comes only from the `MODEL_ID`
     - _Requirements: 3.5, 3.6_
 
 - [ ] 4. [Tristan] [frontend] Thin IO for the slice
-  - [ ] 4.1 [Tristan] [frontend] Implement `io/pdf.ts`
+  - [x] 4.1 [Tristan] [frontend] Implement `io/pdf.ts`
     - Load pdf.js with dynamic `import()` and set up its worker. Return `RawPage[]` with lines built from text items (`hasEOL`).
     - _Requirements: 2.1_
   - [x] 4.2 [Xan] [frontend] Implement `io/fingerprint.ts`
