@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import './ParagraphSheet.css';
+import { useStrings } from '../i18n/language';
 
 interface ParagraphSheetProps {
   /** The paragraph number to display, e.g. 3 */
@@ -20,6 +21,8 @@ interface ParagraphSheetProps {
  * Backdrop tap also closes.
  */
 export function ParagraphSheet({ paragraphNumber, text, onClose }: ParagraphSheetProps) {
+  const t = useStrings().common;
+
   /* Close on Escape */
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
@@ -35,7 +38,7 @@ export function ParagraphSheet({ paragraphNumber, text, onClose }: ParagraphShee
       className="para-sheet-backdrop"
       role="dialog"
       aria-modal="true"
-      aria-label={`Lesson paragraph ${paragraphNumber}`}
+      aria-label={t.paragraphAria(paragraphNumber)}
       onClick={onClose}
     >
       {/* Sheet panel — stop propagation so tapping inside doesn't close */}
@@ -48,11 +51,11 @@ export function ParagraphSheet({ paragraphNumber, text, onClose }: ParagraphShee
 
         {/* Header */}
         <div className="para-sheet__header">
-          <span className="para-sheet__label">From the lesson</span>
+          <span className="para-sheet__label">{t.fromLesson}</span>
           <button
             className="para-sheet__close"
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t.close}
           >
             ×
           </button>

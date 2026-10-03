@@ -1,6 +1,8 @@
 import { useState, useRef } from 'react';
 import './LessonsScreen.css';
 import type { StudyPack } from '../logic/types'
+import { useStrings } from '../i18n/language';
+import { LanguageSwitch } from '../components/LanguageSwitch';
 
 // ── Constants matching design.md error table ───────────────────────────────
 
@@ -10,6 +12,13 @@ const SIZE_LIMIT_BYTES = 20 * 1024 * 1024;
 // ── Types ──────────────────────────────────────────────────────────────────
 
 type Phase = 'idle' | 'loading' | 'error';
+
+// Which error to show. Kept as data (not text) so it shows in the current
+// language, even if the student switches language while it is on screen.
+type LessonError =
+  | { kind: 'notPdf' }
+  | { kind: 'tooBig'; size: string; mode: string; limit: string }
+  | { kind: 'notPack' };
 
 interface LessonsScreenProps {
   packs: StudyPack[];
@@ -67,8 +76,9 @@ function mbStr(bytes: number) {
  *  - TODO: replace with Xan's packFromJson + formatCheck.
  */
 export function LessonsScreen({ packs, onStudy, onMakePack, onOpenPack, onShare }: LessonsScreenProps) {
+  const t = useStrings().lessons;
   const [phase, setPhase]   = useState<Phase>('idle');
-  const [errorMsg, setErrorMsg] = useState('');
+  const [error, setError]   = useState<LessonError>({ kind: 'notPack' });
   const [loadingName, setLoadingName] = useState('');
 
   const lessonInputRef = useRef<HTMLInputElement>(null);
@@ -77,7 +87,6 @@ export function LessonsScreen({ packs, onStudy, onMakePack, onOpenPack, onShare 
   // ── Lesson file picker ───────────────────────────────────────────────────
 
   async function handleLessonFile(file: File) {
-    setErrorMsg('');
 
     // Read first 8 bytes for magic-number check
     const slice = file.slice(0, 8);
@@ -87,7 +96,7 @@ export function LessonsScreen({ packs, onStudy, onMakePack, onOpenPack, onShare 
 
     // Type check — exact text from design.md error table
     if (type === 'unsupported') {
-      setErrorMsg('Please pick a PDF file.');
+      setError({ kind: 'notPdf' });
       setPhase('error');
       return;
     }
@@ -97,9 +106,7 @@ export function LessonsScreen({ packs, onStudy, onMakePack, onOpenPack, onShare 
     const limit  = isLite ? 5 * 1024 * 1024 : SIZE_LIMIT_BYTES;
     if (file.size > limit) {
       const modeLabel = isLite ? 'Lite' : 'Standard';
-      setErrorMsg(
-        `This file is ${mbStr(file.size)}. The limit in ${modeLabel} mode is ${mbStr(limit)}.`,
-      );
+      setError({ kind: 'tooBig', size: mbStr(file.size), mode: modeLabel, limit: mbStr(limit) });
       setPhase('error');
       return;
     }
@@ -125,7 +132,6 @@ export function LessonsScreen({ packs, onStudy, onMakePack, onOpenPack, onShare 
   // ── Pack file picker ─────────────────────────────────────────────────────
 
   async function handlePackFile(file: File) {
-    setErrorMsg('');
 
     // Real path: hand the file text to the caller, which runs packFromJson and
     // saves the pack. It returns whether the file was a valid pack.
@@ -133,7 +139,7 @@ export function LessonsScreen({ packs, onStudy, onMakePack, onOpenPack, onShare 
       const text = await file.text();
       const ok = await onOpenPack(text);
       if (!ok) {
-        setErrorMsg('This file is not a valid pack.');
+        setError({ kind: 'notPack' });
         setPhase('error');
       } else {
         setPhase('idle');
@@ -151,7 +157,7 @@ export function LessonsScreen({ packs, onStudy, onMakePack, onOpenPack, onShare 
       setPhase('idle');
       onStudy(parsed.id as string);
     } catch {
-      setErrorMsg('This file is not a valid pack.');
+      setError({ kind: 'notPack' });
       setPhase('error');
     }
   }
@@ -193,24 +199,27 @@ export function LessonsScreen({ packs, onStudy, onMakePack, onOpenPack, onShare 
           <span className="lessons-screen__diamond" aria-hidden="true" />
           <span className="lessons-screen__appname">[APP NAME]</span>
         </div>
+        <LanguageSwitch />
       </header>
 
-      <h1 className="lessons-screen__heading">Add a lesson</h1>
+      <h1 className="lessons-screen__heading">{t.heading}</h1>
 
       {/* ── Info card ── */}
       <div className="lessons-screen__info-card">
         <p className="lessons-screen__info-title">
-          Needs internet once to make the pack.
+          {t.internetTitle}
         </p>
         <p className="lessons-screen__info-body">
-          After that, study with no internet.
+          {t.internetBody}
         </p>
       </div>
 
       {/* ── Error message ── */}
       {phase === 'error' && (
         <div className="lessons-screen__error" role="alert">
-          {errorMsg}
+          {error.kind === 'tooBig'
+            ? t.tooBig(error.size, error.mode, error.limit)
+            : t[error.kind]}
         </div>
       )}
 
@@ -218,9 +227,9 @@ export function LessonsScreen({ packs, onStudy, onMakePack, onOpenPack, onShare 
       {phase === 'loading' ? (
         <div className="lessons-screen__loading">
           <span className="lessons-screen__spinner" aria-hidden="true" />
-          <span className="lessons-screen__loading-name">Reading {loadingName}</span>
+          <span className="lessons-screen__loading-name">{t.reading(loadingName)}</span>
           <span className="lessons-screen__loading-note">
-            Keep internet on until this finishes
+            {t.keepInternet}
           </span>
         </div>
       ) : (
@@ -229,10 +238,10 @@ export function LessonsScreen({ packs, onStudy, onMakePack, onOpenPack, onShare 
           <button
             className="lessons-screen__pick-btn"
             onClick={() => onMakePack ? onMakePack() : lessonInputRef.current?.click()}
-            aria-label="Choose a PDF file from your phone"
+            aria-label={t.pickAria}
           >
             <span className="lessons-screen__pick-plus" aria-hidden="true">+</span>
-            <span className="lessons-screen__pick-label">Choose a file from your phone</span>
+            <span className="lessons-screen__pick-label">{t.pickLabel}</span>
             <span className="lessons-screen__pick-sub">PDF</span>
           </button>
 
@@ -241,7 +250,7 @@ export function LessonsScreen({ packs, onStudy, onMakePack, onOpenPack, onShare 
             className="lessons-screen__open-btn"
             onClick={() => packInputRef.current?.click()}
           >
-            Open a pack file
+            {t.openPack}
           </button>
         </>
       )}
@@ -249,7 +258,7 @@ export function LessonsScreen({ packs, onStudy, onMakePack, onOpenPack, onShare 
       {/* ── Your study packs ── */}
       {packs.length > 0 && (
         <section className="lessons-screen__packs">
-          <h2 className="lessons-screen__packs-label">Your study packs</h2>
+          <h2 className="lessons-screen__packs-label">{t.yourPacks}</h2>
           <ul className="lessons-screen__pack-list">
             {packs.map(pack => (
               // One card per pack: the Study button on top, Share along the bottom.
@@ -262,19 +271,19 @@ export function LessonsScreen({ packs, onStudy, onMakePack, onOpenPack, onShare 
                   <span className="lessons-screen__pack-info">
                     <span className="lessons-screen__pack-name">{pack.title}</span>
                     <span className="lessons-screen__pack-meta">
-                      {pack.id.startsWith('sample-') ? 'Sample · ' : ''}
-                      {pack.questions.length} questions · saved on phone
+                      {pack.id.startsWith('sample-') ? `${t.sample} · ` : ''}
+                      {t.packMeta(pack.questions.length)}
                     </span>
                   </span>
                   <span className="lessons-screen__pack-study-btn" aria-hidden="true">
-                    Study
+                    {t.study}
                   </span>
                 </button>
                 {onShare && (
                   <button
                     className="lessons-screen__pack-share"
                     onClick={() => onShare(pack)}
-                    aria-label={`Share ${pack.title}`}
+                    aria-label={t.shareAria(pack.title)}
                   >
                     {/* Share icon: arrow up out of a box */}
                     <svg
@@ -291,7 +300,7 @@ export function LessonsScreen({ packs, onStudy, onMakePack, onOpenPack, onShare 
                       <path d="M7 8l5-5 5 5" />
                       <path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6" />
                     </svg>
-                    Share
+                    {t.share}
                   </button>
                 )}
               </li>

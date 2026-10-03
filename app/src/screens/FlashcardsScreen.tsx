@@ -2,6 +2,7 @@ import { useState } from 'react';
 import './FlashcardsScreen.css';
 import type { StudyPack } from '../logic/types'
 import { PackHeader } from '../components/PackHeader';
+import { useStrings } from '../i18n/language';
 
 interface FlashcardsScreenProps {
   pack: StudyPack;
@@ -21,6 +22,9 @@ interface FlashcardsScreenProps {
  * TODO: persist doneCount / progress to store.ts when that layer is ready.
  */
 export function FlashcardsScreen({ pack, onBack }: FlashcardsScreenProps) {
+  const strings = useStrings();
+  const t       = strings.flashcards;
+
   // queue holds indices into pack.glossary
   const [queue, setQueue]       = useState<number[]>(() =>
     pack.glossary.map((_, i) => i),
@@ -70,11 +74,11 @@ export function FlashcardsScreen({ pack, onBack }: FlashcardsScreenProps) {
         <div className="flashcards-done">
           <span className="flashcards-done__icon" aria-hidden="true">✓</span>
           <p className="flashcards-done__count">
-            {doneCount} card{doneCount !== 1 ? 's' : ''} done
+            {t.done(doneCount)}
           </p>
-          <p className="flashcards-done__sub">You went through all the vocabulary.</p>
+          <p className="flashcards-done__sub">{t.doneSub}</p>
           <button className="flashcards-done__back" onClick={onBack}>
-            Back to Progress
+            {t.backToProgress}
           </button>
         </div>
       </>
@@ -83,7 +87,7 @@ export function FlashcardsScreen({ pack, onBack }: FlashcardsScreenProps) {
 
   // ── Active state ──────────────────────────────────────────────────────────
 
-  const progressLabel = `${doneCount + 1} of ${total}`;
+  const progressLabel = strings.common.counter(doneCount + 1, total);
   const progress      = doneCount / total;
 
   return (
@@ -100,18 +104,18 @@ export function FlashcardsScreen({ pack, onBack }: FlashcardsScreenProps) {
         <button
           className={`flashcard${flipped ? ' flashcard--flipped' : ''}`}
           onClick={handleFlip}
-          aria-label={flipped ? 'Showing Filipino side. Tap to see English.' : 'Showing English side. Tap to flip.'}
+          aria-label={flipped ? t.flipAriaBack : t.flipAriaFront}
         >
           <div className="flashcard__inner">
             {/* Front: English */}
             <div className="flashcard__face flashcard__face--front">
-              <span className="flashcard__lang">English</span>
+              <span className="flashcard__lang">{t.english}</span>
               <p className="flashcard__term">{card!.en}</p>
-              <span className="flashcard__hint">Tap to flip</span>
+              <span className="flashcard__hint">{t.tapToFlip}</span>
             </div>
             {/* Back: Filipino + meaning */}
             <div className="flashcard__face flashcard__face--back">
-              <span className="flashcard__lang">Filipino</span>
+              <span className="flashcard__lang">{t.filipino}</span>
               <p className="flashcard__term">{card!.fil}</p>
               <p className="flashcard__meaning">{card!.meaning}</p>
             </div>
@@ -124,19 +128,19 @@ export function FlashcardsScreen({ pack, onBack }: FlashcardsScreenProps) {
             className="flashcards-screen__btn flashcards-screen__btn--again"
             onClick={handleShowAgain}
           >
-            Show again
+            {t.showAgain}
           </button>
           <button
             className="flashcards-screen__btn flashcards-screen__btn--got-it"
             onClick={handleGotIt}
           >
-            Got it
+            {t.gotIt}
           </button>
         </div>
 
         {/* Cards remaining */}
         <p className="flashcards-screen__remaining">
-          {queue.length} card{queue.length !== 1 ? 's' : ''} remaining
+          {t.remaining(queue.length)}
         </p>
       </div>
     </>

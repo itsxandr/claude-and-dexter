@@ -7,6 +7,7 @@ import { PackHeader } from '../components/PackHeader';
 import { ReadAloudButton } from '../components/ReadAloudButton';
 import { FeedbackPanel } from '../components/FeedbackPanel';
 import { ParagraphSheet } from '../components/ParagraphSheet';
+import { useStrings } from '../i18n/language';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -56,6 +57,8 @@ export function QuestionScreen({
   onFinish,
   onClose,
 }: QuestionScreenProps) {
+  const strings  = useStrings();
+  const t        = strings.question;
   const question = pack.questions[questionIndex];
 
   // ── Per-question state (reset automatically via key= on parent) ──────────
@@ -88,9 +91,9 @@ export function QuestionScreen({
   const canContinue = isRight || isRevealed;
   const canRetry    = isWrong && !isRevealed;
 
-  let primaryLabel = 'Choose an answer';
-  if (canContinue) primaryLabel = 'Continue';
-  else if (canRetry) primaryLabel = 'Try again';
+  let primaryLabel = t.choose;
+  if (canContinue) primaryLabel = t.continue;
+  else if (canRetry) primaryLabel = t.tryAgain;
 
   // ── Feedback (from logic/coach.ts) ─────────────────────────────────────────
   //
@@ -115,9 +118,9 @@ export function QuestionScreen({
     feedbackKind      = feedback.kind;
     feedbackParagraph = feedback.paragraph;
     if (feedback.kind === 'praise') {
-      feedbackText = `${feedback.message} ${feedback.text}`;
+      feedbackText = `${t.praise[feedback.praiseIndex]} ${feedback.text}`;
     } else if (feedback.kind === 'hint') {
-      hintLabel    = `Hint ${feedback.hintIndex + 1} of 2`;
+      hintLabel    = t.hintOf(feedback.hintIndex + 1);
       feedbackText = feedback.text;
     } else {
       feedbackText = feedback.text;
@@ -156,7 +159,7 @@ export function QuestionScreen({
 
   // ── Progress ──────────────────────────────────────────────────────────────
   const progress      = answeredCount / sessionLength;
-  const counterLabel  = `${answeredCount + 1} of ${sessionLength}`;
+  const counterLabel  = strings.common.counter(answeredCount + 1, sessionLength);
 
   // ── Read-aloud text ───────────────────────────────────────────────────────
   const choiceLetters = ['A', 'B', 'C', 'D'];
@@ -204,7 +207,7 @@ export function QuestionScreen({
   // During hint/retry phase they must stay tappable.
   const choicesLocked = isRight || isRevealed;
 
-  const levelBadge = `Level ${level}`;
+  const levelBadge = t.level(level);
 
   return (
     <>

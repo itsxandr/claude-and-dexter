@@ -1,4 +1,5 @@
 import './FeedbackPanel.css';
+import { useStrings } from '../i18n/language';
 
 type FeedbackKind = 'hint' | 'reveal' | 'praise';
 
@@ -31,17 +32,18 @@ export function FeedbackPanel({
   paragraph,
   onSeeInLesson,
 }: FeedbackPanelProps) {
+  const t = useStrings().feedback;
   const isGreen = kind === 'praise';
 
   return (
     <div className={`feedback-panel feedback-panel--${kind}`} role="status" aria-live="polite">
       {/* Label row: "Correct!" or "Hint 1 of 2" */}
       {isGreen ? (
-        <div className="feedback-panel__heading feedback-panel__heading--correct">Correct!</div>
+        <div className="feedback-panel__heading feedback-panel__heading--correct">{t.correct}</div>
       ) : hintLabel ? (
         <div className="feedback-panel__hint-label">{hintLabel}</div>
       ) : (
-        <div className="feedback-panel__heading feedback-panel__heading--reveal">Here's the answer</div>
+        <div className="feedback-panel__heading feedback-panel__heading--reveal">{t.reveal}</div>
       )}
 
       {/* Body text */}
@@ -51,9 +53,9 @@ export function FeedbackPanel({
       <button
         className="feedback-panel__see-link"
         onClick={() => onSeeInLesson(paragraph)}
-        aria-label={`See in lesson, paragraph ${paragraph}`}
+        aria-label={t.seeInLessonAria(paragraph)}
       >
-        See in lesson{' '}¶{paragraph}
+        {t.seeInLesson}{' '}¶{paragraph}
       </button>
     </div>
   );

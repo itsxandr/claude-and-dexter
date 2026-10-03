@@ -14,14 +14,15 @@ import type { Question } from './types'
 export type Feedback =
   | { kind: 'hint'; text: string; paragraph: number; hintIndex: 0 | 1 }
   | { kind: 'reveal'; correctIndex: number; text: string; paragraph: number }
-  | { kind: 'praise'; message: string; text: string; paragraph: number }
+  | { kind: 'praise'; praiseIndex: number; text: string; paragraph: number }
 
-// A small fixed list of praise messages. One is picked at random on a right
-// answer. No AI, no stored state.
-export const PRAISE = ['Great job!', 'Nicely done!', 'Correct!', 'You got it!', 'Well done!']
+// How many praise messages there are. One is picked at random on a right
+// answer; the screen shows it in the App language (i18n/strings.ts). No AI,
+// no stored state.
+export const PRAISE_COUNT = 5
 
-function randomPraise(): string {
-  return PRAISE[Math.floor(Math.random() * PRAISE.length)]
+function randomPraise(): number {
+  return Math.floor(Math.random() * PRAISE_COUNT)
 }
 
 export function coach(q: Question, wrongTriesBefore: number, choice: number): Feedback {
@@ -29,7 +30,7 @@ export function coach(q: Question, wrongTriesBefore: number, choice: number): Fe
   if (choice === q.answerIndex) {
     return {
       kind: 'praise',
-      message: randomPraise(),
+      praiseIndex: randomPraise(),
       text: q.explanation.text,
       paragraph: q.explanation.paragraph,
     }

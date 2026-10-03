@@ -1,11 +1,20 @@
 import { useState, useCallback, useEffect } from 'react';
 import './App.css';
 
-import type { Skill, ReadingLevel, StudyPack, MasteryRecord } from './logic/types'
+import type { Skill, StudyPack, MasteryRecord } from './logic/types'
 import { emptyMastery, recordAnswer } from './logic/mastery'
 import type { PathKind, SessionState } from './logic/session'
 import { startSession, pickNext, answer, skipFlagged } from './logic/session'
-import { listPacks, putPack, getMastery, putMastery } from './io/store'
+import type { Tab, Screen } from './logic/place'
+import { checkPlace } from './logic/place'
+import {
+  listPacks, putPack, getMastery, putMastery,
+  getOnboarded, putOnboarded, getPlace, putPlace,
+  getLanguage, putLanguage,
+} from './io/store'
+import { LanguageContext } from './i18n/language'
+import { STRINGS, guessLanguage } from './i18n/strings'
+import type { Language } from './i18n/strings'
 import { packFromJson } from './logic/packJson'
 import sampleStudyPack from '../fixtures/sample.studypack.json'
 import { PathPickScreen }    from './screens/PathPickScreen';
@@ -15,19 +24,7 @@ import { ProgressScreen }    from './screens/ProgressScreen';
 import { Library }           from './screens/Library';
 import { MakePack }          from './screens/MakePack';
 import { FlashcardsScreen }  from './screens/FlashcardsScreen';
-
-// ── Types ──────────────────────────────────────────────────────────────────
-
-type Tab          = 'lessons' | 'study' | 'progress';
-
-type Screen =
-  | { name: 'lessons' }
-  | { name: 'make_pack' }
-  | { name: 'path_pick' }
-  | { name: 'summary';    path: PathKind; level: ReadingLevel }
-  | { name: 'question';   questionIndex: number; answeredCount: number }
-  | { name: 'progress' }
-  | { name: 'flashcards' };
+import { OnboardingScreen }  from './screens/OnboardingScreen';
 
 const SESSION_LENGTH = 8;
 
@@ -52,11 +49,17 @@ export default function App() {
   const [mastery, setMastery]     = useState<MasteryRecord>(emptyMastery());
   const [flagged]                 = useState<Set<string>>(new Set());
   const [session, setSession]     = useState<SessionState>(() => startSession('catchup'));
+  // False until the store has loaded; nothing shows (or saves) before then.
+  const [ready, setReady]         = useState(false);
+  const [onboarded, setOnboarded] = useState(false);
+  // Before the student picks, guess from the phone's own language setting.
+  const [language, setLanguageState] = useState<Language>(() => guessLanguage(navigator.language));
 
   // ── Load from the store on start ───────────────────────────────────────────
   //
   // Seed the fixture pack the first time (no packs yet), then read the pack
-  // list and the current pack's mastery from the store.
+  // list, whether onboarding is done, and the saved Place. If the Place still
+  // fits, reopen on it; otherwise start on Lessons with the first pack.
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -65,17 +68,50 @@ export default function App() {
         await putPack(SEED_PACK);
         saved = await listPacks();
       }
+      const doneOnboarding = await getOnboarded();
+      const savedLanguage = await getLanguage();
+      const place = checkPlace(await getPlace(), saved);
+      const current = saved.find(p => p.id === place?.packId) ?? saved[0] ?? null;
+      const m = current !== null ? await getMastery(current.id) : undefined;
       if (cancelled) return;
+
       setPacks(saved);
-      const first = saved[0] ?? null;
-      setPack(first);
-      if (first !== null) {
-        const m = await getMastery(first.id);
-        if (!cancelled) setMastery(m ?? emptyMastery());
+      setPack(current);
+      setMastery(m ?? emptyMastery());
+      setOnboarded(doneOnboarding);
+      if (savedLanguage !== undefined) setLanguageState(savedLanguage);
+      if (place !== null) {
+        setScreen(place.screen);
+        setActiveTab(place.tab);
+        setSession(place.session);
       }
+      setReady(true);
     })();
     return () => { cancelled = true };
   }, []);
+
+  // ── Save the Place on every move ───────────────────────────────────────────
+  //
+  // So a full close and reopen lands on the same screen and session.
+  useEffect(() => {
+    if (!ready) return;
+    void putPlace({ screen, tab: activeTab, packId: pack?.id ?? null, session });
+  }, [ready, screen, activeTab, pack, session]);
+
+  // Tell the browser the page language too (screen readers and read-aloud use it).
+  useEffect(() => {
+    document.documentElement.lang = language;
+  }, [language]);
+
+  function setLanguage(next: Language) {
+    setLanguageState(next);
+    void putLanguage(next);
+  }
+
+  function handleOnboardingDone() {
+    setOnboarded(true);
+    void putOnboarded();
+  }
 
   // ── Tab navigation ────────────────────────────────────────────────────────
 
@@ -214,6 +250,11 @@ export default function App() {
   // ── Render ────────────────────────────────────────────────────────────────
 
   function renderScreen() {
+    // The first time the app opens, onboarding comes before everything else.
+    if (!onboarded) {
+      return <OnboardingScreen onDone={handleOnboardingDone} />;
+    }
+
     // The Library and Make Pack screens work with the saved packs; they do not
     // need a single "current" pack.
     if (screen.name === 'lessons') {
@@ -293,15 +334,22 @@ export default function App() {
     }
   }
 
-  const hideTabs = screen.name === 'question' || screen.name === 'summary'
+  // Blank until the store has loaded, so the Lessons screen does not flash
+  // before jumping to the saved Place.
+  if (!ready) return null;
+
+  const hideTabs = !onboarded
+                || screen.name === 'question' || screen.name === 'summary'
                 || screen.name === 'flashcards' || screen.name === 'make_pack';
 
+  const t = STRINGS[language];
+
   return (
-    <>
+    <LanguageContext.Provider value={{ language, setLanguage }}>
       <div className="app-content">{renderScreen()}</div>
 
       {!hideTabs && (
-        <nav className="bottom-tabs" aria-label="Main navigation">
+        <nav className="bottom-tabs" aria-label={t.navLabel}>
           {(['lessons', 'study', 'progress'] as Tab[]).map(tab => (
             <button
               key={tab}
@@ -310,11 +358,11 @@ export default function App() {
               aria-current={activeTab === tab ? 'page' : undefined}
             >
               <span className="bottom-tabs__indicator" aria-hidden="true" />
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {t.tabs[tab]}
             </button>
           ))}
         </nav>
       )}
-    </>
+    </LanguageContext.Provider>
   );
 }

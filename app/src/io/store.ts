@@ -9,13 +9,17 @@ import { openDB } from 'idb'
 import type { DBSchema, IDBPDatabase } from 'idb'
 import { APP_NAME } from '../config'
 import type { StudyPack, MasteryRecord, Mode } from '../logic/types'
+import type { Place } from '../logic/place'
+import type { Language } from '../i18n/strings'
 
 // The four object stores, their keys, and the shape of each stored value.
+// Settings keys: 'mode' (Mode), 'language' (Language), 'onboarded' (true),
+// 'place' (Place).
 interface StoreSchema extends DBSchema {
   packs:    { key: string; value: StudyPack }
   mastery:  { key: string; value: MasteryRecord }
   flags:    { key: string; value: true }
-  settings: { key: string; value: Mode }
+  settings: { key: string; value: Mode | Language | true | Place }
 }
 
 // One database, created with all four stores at version 1, so no later
@@ -79,9 +83,36 @@ export async function putFlag(packId: string, questionId: string): Promise<void>
 // ── Settings ───────────────────────────────────────────────────────────────
 
 export async function getMode(): Promise<Mode | undefined> {
-  return (await db()).get('settings', 'mode')
+  return (await (await db()).get('settings', 'mode')) as Mode | undefined
 }
 
 export async function putMode(mode: Mode): Promise<void> {
   await (await db()).put('settings', mode, 'mode')
+}
+
+// The App language the student picked (in onboarding or on Lessons).
+export async function getLanguage(): Promise<Language | undefined> {
+  return (await (await db()).get('settings', 'language')) as Language | undefined
+}
+
+export async function putLanguage(language: Language): Promise<void> {
+  await (await db()).put('settings', language, 'language')
+}
+
+// Onboarding shows until the student finishes it once.
+export async function getOnboarded(): Promise<boolean> {
+  return (await (await db()).get('settings', 'onboarded')) === true
+}
+
+export async function putOnboarded(): Promise<void> {
+  await (await db()).put('settings', true, 'onboarded')
+}
+
+// The Place: the screen and Study_Session to reopen on.
+export async function getPlace(): Promise<Place | undefined> {
+  return (await (await db()).get('settings', 'place')) as Place | undefined
+}
+
+export async function putPlace(place: Place): Promise<void> {
+  await (await db()).put('settings', place, 'place')
 }
