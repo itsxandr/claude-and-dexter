@@ -1,6 +1,7 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import './QuestionScreen.css';
 import type { StudyPack } from '../logic/types'
+import { coach } from '../logic/coach'
 import { PackHeader } from '../components/PackHeader';
 import { ReadAloudButton } from '../components/ReadAloudButton';
 import { FeedbackPanel } from '../components/FeedbackPanel';
@@ -27,13 +28,6 @@ interface QuestionScreenProps {
   onReport: (questionId: string) => void;
   /** Called when the × close button is tapped */
   onClose: () => void;
-}
-
-// ── Praise messages ────────────────────────────────────────────────────────
-
-const PRAISE = ['Great job!', 'Nicely done!', 'Correct!', 'You got it!', 'Well done!'];
-function randomPraise() {
-  return PRAISE[Math.floor(Math.random() * PRAISE.length)];
 }
 
 // ── Inner component (keyed externally so state resets per question) ────────
@@ -74,7 +68,6 @@ export function QuestionScreen({
   const [wrongTries, setWrongTries]     = useState(0);
   const [pickedIndex, setPickedIndex]   = useState<number | null>(null);
   const [openPara, setOpenPara]         = useState<number | null>(null);
-  const [praiseMsg]                     = useState(randomPraise);  // stable per mount
 
   // ── Derived state ────────────────────────────────────────────────────────
   const hasPicked  = pickedIndex !== null;
@@ -94,38 +87,35 @@ export function QuestionScreen({
   if (canContinue) primaryLabel = 'Continue';
   else if (canRetry) primaryLabel = 'Try again';
 
-  // ── Feedback kind ────────────────────────────────────────────────────────
+  // ── Feedback (from logic/coach.ts) ─────────────────────────────────────────
   //
-  // Shown only when the student has picked something.
-  // wrongTries is incremented *before* we compute feedback, so:
-  //   wrongTries === 1 after 1st wrong → show Hint 1
-  //   wrongTries === 2 after 2nd wrong → show Hint 2
-  //   wrongTries === 3 after 3rd wrong → show Reveal
-  //   isRight                          → show Praise
+  // Shown only when the student has picked something. `coach` takes the number
+  // of wrong tries *before* this answer, so we subtract the pick we just made:
+  // a wrong pick already bumped wrongTries, a right pick did not.
+  //
+  // useMemo keeps one coach result per answer, so the random praise message
+  // stays the same across unrelated re-renders (like opening the paragraph sheet).
+  const feedback = useMemo(() => {
+    if (pickedIndex === null) return null;
+    const wrongTriesBefore = isRight ? wrongTries : wrongTries - 1;
+    return coach(question, wrongTriesBefore, pickedIndex);
+  }, [question, pickedIndex, wrongTries, isRight]);
+
   let feedbackKind: FeedbackKind | null = null;
   let feedbackText = '';
   let feedbackParagraph = 1;
   let hintLabel = '';
 
-  if (hasPicked) {
-    if (isRight) {
-      feedbackKind    = 'praise';
-      feedbackText    = `${praiseMsg} ${question.explanation.text}`;
-      feedbackParagraph = question.explanation.paragraph;
-    } else if (wrongTries === 1) {
-      feedbackKind    = 'hint';
-      hintLabel       = 'Hint 1 of 2';
-      feedbackText    = question.hints[0].text;
-      feedbackParagraph = question.hints[0].paragraph;
-    } else if (wrongTries === 2) {
-      feedbackKind    = 'hint';
-      hintLabel       = 'Hint 2 of 2';
-      feedbackText    = question.hints[1].text;
-      feedbackParagraph = question.hints[1].paragraph;
-    } else if (wrongTries >= 3) {
-      feedbackKind    = 'reveal';
-      feedbackText    = question.explanation.text;
-      feedbackParagraph = question.explanation.paragraph;
+  if (feedback !== null) {
+    feedbackKind      = feedback.kind;
+    feedbackParagraph = feedback.paragraph;
+    if (feedback.kind === 'praise') {
+      feedbackText = `${feedback.message} ${feedback.text}`;
+    } else if (feedback.kind === 'hint') {
+      hintLabel    = `Hint ${feedback.hintIndex + 1} of 2`;
+      feedbackText = feedback.text;
+    } else {
+      feedbackText = feedback.text;
     }
   }
 

@@ -2,8 +2,10 @@ import { useState, useCallback } from 'react';
 import './App.css';
 
 import { samplePack } from './mock/samplePack';
-import type { Skill, ReadingLevel, StudyPack, MasteryRecord } from './logic/types'
+import type { Skill, ReadingLevel, MasteryRecord } from './logic/types'
 import { emptyMastery, recordAnswer } from './logic/mastery'
+import type { PathKind, SessionState } from './logic/session'
+import { startSession, pickNext, answer, skipFlagged } from './logic/session'
 import { PathPickScreen }    from './screens/PathPickScreen';
 import { SummaryScreen }     from './screens/SummaryScreen';
 import { QuestionScreen }    from './screens/QuestionScreen';
@@ -13,106 +15,33 @@ import { FlashcardsScreen }  from './screens/FlashcardsScreen';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
-type PathKind     = 'catchup' | 'practice';
 type Tab          = 'lessons' | 'study' | 'progress';
 
 type Screen =
   | { name: 'lessons' }
   | { name: 'path_pick' }
   | { name: 'summary';    path: PathKind; level: ReadingLevel }
-  | { name: 'question';   path: PathKind; level: ReadingLevel;
-      questionIndex: number; answeredCount: number }
+  | { name: 'question';   questionIndex: number; answeredCount: number }
   | { name: 'progress' }
   | { name: 'flashcards' };
 
 const SESSION_LENGTH = 8;
 
-// ── Session logic placeholder (TODO: replace with Xan's session.ts) ────────
-
-/**
- * TODO: Replace with session.ts → pickNext()
- *
- * Rules (design.md):
- *  - Pick Available_Question at current level first.
- *  - If none, pick the nearest level (distance 1 before distance 2).
- *  - When levels 1 and 3 tie (current = 2), prefer level 1.
- *  - Inside a level, first in pack order.
- *  - Available = not in answeredIds, not flagged.
- */
-function sessionPickNext(
-  pack: StudyPack,
-  answeredIds: string[],
-  level: ReadingLevel,
-  flagged: Set<string>,
-): number | null {
-  const available = pack.questions
-    .map((q, i) => ({ q, i }))
-    .filter(({ q }) => !answeredIds.includes(q.id) && !flagged.has(q.id));
-
-  if (available.length === 0) return null;
-
-  // Try levels in preference order: current, then by ascending distance.
-  // When distance is equal (only possible when current=2: levels 1 and 3),
-  // prefer 1 over 3 per spec.
-  const levelPreference: ReadingLevel[] = level === 1 ? [1, 2, 3]
-    : level === 2 ? [2, 1, 3]
-    : [3, 2, 1];
-
-  for (const l of levelPreference) {
-    const atLevel = available.filter(({ q }) => q.level === l);
-    if (atLevel.length > 0) return atLevel[0].i; // first in pack order
-  }
-  return null;
-}
-
-/**
- * TODO: Replace with session.ts level-adaptation logic.
- *
- * Rules (design.md):
- *  - 3 first-try rights in a row  → level up   (max 3), reset rightStreak
- *  - 2 first-try wrongs in a row  → level down (min 1), reset wrongStreak
- *  - Level stays in 1..3.
- */
-function sessionAdaptLevel(
-  level: ReadingLevel,
-  rightStreak: number,
-  wrongStreak: number,
-): { level: ReadingLevel; rightStreak: number; wrongStreak: number } {
-  if (rightStreak >= 3) {
-    return {
-      level: Math.min(3, level + 1) as ReadingLevel,
-      rightStreak: 0,
-      wrongStreak,
-    };
-  }
-  if (wrongStreak >= 2) {
-    return {
-      level: Math.max(1, level - 1) as ReadingLevel,
-      rightStreak,
-      wrongStreak: 0,
-    };
-  }
-  return { level, rightStreak, wrongStreak };
+// Index of a wrong choice for a question (choices always has 2–4 entries, so
+// one wrong choice always exists). Used to replay a wrong answer into the
+// session reducer when the Question finished without a first-try right.
+function wrongChoice(answerIndex: number): number {
+  return answerIndex === 0 ? 1 : 0;
 }
 
 // ── App ────────────────────────────────────────────────────────────────────
 
 export default function App() {
-  const [screen, setScreen]           = useState<Screen>({ name: 'lessons' });
-  const [activeTab, setActiveTab]     = useState<Tab>('lessons');
-  const [mastery, setMastery]         = useState<MasteryRecord>(emptyMastery());
-  const [flagged]                     = useState<Set<string>>(new Set());
-  const [answeredIds, setAnsweredIds] = useState<string[]>([]);
-  const [rightStreak, setRightStreak] = useState(0);
-  const [wrongStreak, setWrongStreak] = useState(0);
-
-  // ── Helpers ───────────────────────────────────────────────────────────────
-
-  function resetSession() {
-    setAnsweredIds([]);
-    setRightStreak(0);
-    setWrongStreak(0);
-  }
+  const [screen, setScreen]       = useState<Screen>({ name: 'lessons' });
+  const [activeTab, setActiveTab] = useState<Tab>('lessons');
+  const [mastery, setMastery]     = useState<MasteryRecord>(emptyMastery());
+  const [flagged]                 = useState<Set<string>>(new Set());
+  const [session, setSession]     = useState<SessionState>(() => startSession('catchup'));
 
   // ── Tab navigation ────────────────────────────────────────────────────────
 
@@ -126,26 +55,32 @@ export default function App() {
   // ── Screen transitions ────────────────────────────────────────────────────
 
   function handleStudyFromLesson() {
-    resetSession();
     setActiveTab('study');
     setScreen({ name: 'path_pick' });
   }
 
   function handlePathPick(path: PathKind) {
-    const level: ReadingLevel = path === 'catchup' ? 1 : 2;
-    resetSession();
+    const fresh = startSession(path);
+    setSession(fresh);
     setActiveTab('study');
-    setScreen({ name: 'summary', path, level });
+    setScreen({ name: 'summary', path, level: fresh.level });
   }
 
-  function handleSummaryStart(path: PathKind, level: ReadingLevel) {
-    const nextIdx = sessionPickNext(samplePack, [], level, flagged);
-    if (nextIdx === null) {
+  // Open the question that the reducer picks next for `s`, or go to Progress
+  // when the session is done or nothing is left to pick.
+  function showNext(s: SessionState, answeredCount: number) {
+    const next = s.done ? null : pickNext(samplePack, s, flagged);
+    if (next === null) {
       setScreen({ name: 'progress' });
       setActiveTab('progress');
       return;
     }
-    setScreen({ name: 'question', path, level, questionIndex: nextIdx, answeredCount: 0 });
+    const questionIndex = samplePack.questions.findIndex(q => q.id === next.id);
+    setScreen({ name: 'question', questionIndex, answeredCount });
+  }
+
+  function handleSummaryStart() {
+    showNext(session, 0);
   }
 
   const handleQuestionFinish = useCallback((
@@ -153,72 +88,41 @@ export default function App() {
     firstTryRight: boolean,
   ) => {
     if (screen.name !== 'question') return;
-    const { path, answeredCount } = screen;
-    let { level } = screen;
+    const { answeredCount } = screen;
 
-    // Record mastery for this question's specific skill
     const question = samplePack.questions.find(q => q.id === questionId)!;
+
+    // Record mastery for this question's Skill.
     setMastery(m => recordAnswer(m, question.skill as Skill, firstTryRight));
 
-    // Update streaks
-    const newRight = firstTryRight ? rightStreak + 1 : 0;
-    const newWrong = !firstTryRight ? wrongStreak + 1 : 0;
-
-    // Adapt level per streak rules
-    const adapted = sessionAdaptLevel(level, newRight, newWrong);
-    level = adapted.level;
-    setRightStreak(adapted.rightStreak);
-    setWrongStreak(adapted.wrongStreak);
-
-    // Mark this question done
-    const newAnswered      = [...answeredIds, questionId];
-    const newAnsweredCount = answeredCount + 1;
-    setAnsweredIds(newAnswered);
-
-    // End at exactly SESSION_LENGTH (8)
-    if (newAnsweredCount >= SESSION_LENGTH) {
-      setScreen({ name: 'progress' });
-      setActiveTab('progress');
-      return;
+    // Drive the session reducer to the finished state. A first-try right is one
+    // right answer; any other finish is a first-try wrong, replayed until the
+    // question finishes (on the third wrong). Both land on the same SessionState.
+    let next = session
+    if (firstTryRight) {
+      next = answer(next, question, question.answerIndex).state
+    } else {
+      const wrong = wrongChoice(question.answerIndex)
+      // Three wrong answers finish the question (reveal on the third).
+      next = answer(next, question, wrong).state
+      next = answer(next, question, wrong).state
+      next = answer(next, question, wrong).state
     }
 
-    // Pick next at the (possibly adapted) level
-    const nextIdx = sessionPickNext(samplePack, newAnswered, level, flagged);
-    if (nextIdx === null) {
-      setScreen({ name: 'progress' });
-      setActiveTab('progress');
-      return;
-    }
+    setSession(next);
+    showNext(next, answeredCount + 1);
+  }, [screen, session, flagged]);
 
-    setScreen({
-      name: 'question', path, level,
-      questionIndex: nextIdx,
-      answeredCount: newAnsweredCount,
-    });
-  }, [screen, answeredIds, rightStreak, wrongStreak, flagged]);
-
-  const handleReport = useCallback((questionId: string) => {
-    // TODO: write flag to store.ts, call session.ts skipFlagged()
-    // Reported questions don't count toward SESSION_LENGTH.
+  const handleReport = useCallback((_questionId: string) => {
+    // Reported questions don't count toward SESSION_LENGTH or change streaks.
+    // TODO: persist the flag with store.ts (task 16).
     if (screen.name !== 'question') return;
-    const { path, level, answeredCount } = screen;
+    const { answeredCount } = screen;
 
-    const newAnswered = [...answeredIds, questionId];
-    setAnsweredIds(newAnswered);
-
-    const nextIdx = sessionPickNext(samplePack, newAnswered, level, flagged);
-    if (nextIdx === null || answeredCount >= SESSION_LENGTH) {
-      setScreen({ name: 'progress' });
-      setActiveTab('progress');
-      return;
-    }
-
-    setScreen({
-      name: 'question', path, level,
-      questionIndex: nextIdx,
-      answeredCount, // not incremented — reported doesn't count toward 8
-    });
-  }, [screen, answeredIds, flagged]);
+    const next = skipFlagged(session, samplePack, flagged);
+    setSession(next);
+    showNext(next, answeredCount); // not incremented — reported doesn't count
+  }, [screen, session, flagged]);
 
   function handleClose() {
     setScreen({ name: 'path_pick' });
@@ -226,7 +130,6 @@ export default function App() {
   }
 
   function handleStudyAgain() {
-    resetSession();
     setScreen({ name: 'path_pick' });
     setActiveTab('study');
   }
@@ -247,7 +150,7 @@ export default function App() {
           <SummaryScreen
             pack={samplePack}
             level={screen.level}
-            onStart={() => handleSummaryStart(screen.path, screen.level)}
+            onStart={handleSummaryStart}
             onClose={handleClose}
           />
         );
@@ -261,7 +164,7 @@ export default function App() {
             questionIndex={screen.questionIndex}
             sessionLength={SESSION_LENGTH}
             answeredCount={screen.answeredCount}
-            level={screen.level}
+            level={session.level}
             onFinish={handleQuestionFinish}
             onReport={handleReport}
             onClose={handleClose}

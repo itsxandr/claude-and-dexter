@@ -110,14 +110,14 @@ Model rule for every backend task: the model name comes only from the `MODEL_ID`
     - _Requirements: 8.1, 8.2_
 
 - [ ] 5. [Tristan] [frontend] Study logic for the slice: coach, session, mastery
-  - [ ] 5.1 [Tristan] [frontend] Implement `coach()` in `logic/coach.ts`
+  - [x] 5.1 [Tristan] [frontend] Implement `coach()` in `logic/coach.ts`
     - Right → praise from a small fixed list + Explanation. Wrong after 0 earlier wrongs → Hint 1; after 1 → Hint 2; after 2 → reveal Explanation and correct answer. Every feedback carries its `paragraph`.
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_
   - [ ]* 5.2 [Tristan] [frontend] Write property test for the coach ladder
     - File: `logic/coach.test.ts`
     - **Property 15: Coach feedback ladder**
     - **Validates: Requirements 6.1, 6.2, 6.3, 6.4, 6.5**
-  - [ ] 5.3 [Tristan] [frontend] Implement the session reducer in `logic/session.ts`
+  - [x] 5.3 [Tristan] [frontend] Implement the session reducer in `logic/session.ts`
     - `startSession`, `available`, `pickNext` (nearest level, level 1 wins a tie with 3), `answer` (uses `coach`, updates streaks and level, finishes a question on right or third wrong), `skipFlagged`, and the `done` rule (8 finished or nothing left).
     - Add two small required unit tests: `startSession("catchup").level === 1` and `startSession("practice").level === 2`.
     - _Requirements: 5.2, 5.3, 5.5, 5.6, 5.7, 5.8, 5.9, 6.9_
