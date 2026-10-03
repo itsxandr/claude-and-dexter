@@ -184,7 +184,7 @@ Model rule for every backend task: the model name comes only from the `MODEL_ID`
     - File: `logic/packJson.invalid.test.ts`
     - **Property 8: Invalid input never becomes a pack**
     - **Validates: Requirements 4.7, 3.10**
-  - [x] 9.4 [frontend] Implement `io/packFile.ts` and the Share / Open buttons
+  - [x] 9.4 [frontend] Implement `logic/packJson.ts` and `screens/Library.tsx` and the Share / Open buttons
     - Export: `File` named `safeName(title) + PACK_EXTENSION`. Use the Web Share API when `navigator.canShare({ files })` is true, else download.
     - Import: file input with no `accept` filter, read as text, `packFromJson`. On failure show "This file is not a valid pack." and save nothing. Same `id` replaces the old pack.
     - Add "Share" to the pack's first screen, `PathPick.tsx` (the Preview does not exist yet; task 11 adds Share there too). Add "Open a pack file" to `Library.tsx`.
