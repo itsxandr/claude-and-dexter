@@ -97,6 +97,7 @@ Rules:
 - Every "paragraph" and every number in "paragraphs" must be a paragraph number that exists in the lesson.
 - Refer to paragraphs by number only. Never copy paragraph text into the JSON.
 - "glossary": 3 to 8 key terms from the lesson. "en" is the English term, "fil" is the Filipino term, "meaning" is one short sentence in plain words.
+- Write every summary, prompt, choice, hint, explanation and glossary "meaning" in the same language as the lesson. If the lesson is in Filipino, write them in Filipino. Do not translate the lesson into English.
 - Use short sentences everywhere. Use only facts from the lesson.`;
 
 function readEnv(name: "MODEL_ID" | "MODEL_API_KEY"): string {
