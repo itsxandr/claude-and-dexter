@@ -36,8 +36,7 @@ export function ProgressScreen({ pack, mastery, onStudyAgain, onFlashcards }: Pr
       {/* ── App header ── */}
       <header className="progress-screen__appbar">
         <div className="progress-screen__brand">
-          <span className="progress-screen__diamond" aria-hidden="true" />
-          <span className="progress-screen__appname">KodiGo</span>
+          <img src="/logo.png" alt="KodiGo" height={28} />
         </div>
       </header>
 

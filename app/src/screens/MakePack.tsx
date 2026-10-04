@@ -89,8 +89,7 @@ export function MakePack({ onDone, onCancel }: MakePackProps) {
       {/* ── App header ── */}
       <header className="lessons-screen__appbar">
         <div className="lessons-screen__brand">
-          <span className="lessons-screen__diamond" aria-hidden="true" />
-          <span className="lessons-screen__appname">KodiGo</span>
+          <img src="/logo.png" alt="KodiGo" height={28} />
         </div>
       </header>
 

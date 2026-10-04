@@ -196,8 +196,7 @@ export function LessonsScreen({ packs, onStudy, onMakePack, onOpenPack, onShare 
       {/* ── App header ── */}
       <header className="lessons-screen__appbar">
         <div className="lessons-screen__brand">
-          <span className="lessons-screen__diamond" aria-hidden="true" />
-          <span className="lessons-screen__appname">KodiGo</span>
+          <img src="/logo.png" alt="KodiGo" height={28} />
         </div>
         <LanguageSwitch />
       </header>
